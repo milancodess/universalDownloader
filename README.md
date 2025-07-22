@@ -15,6 +15,7 @@ Download media from Threads, Reddit, Facebook, Instagram, and more — all in on
   - Reddit
   - Threads
   - TikTok
+  - YouTube
 - Easy REST API endpoints
 - Built with JavaScript
 - Swagger API documentation included
@@ -70,6 +71,7 @@ Response:
 | `/api/reddit/download`  | Download Reddit media             | GET    |
 | `/api/threads/download` | Download Threads media            | GET    |
 | `/api/tiktok/download`  | Download TikTok media             | GET    |
+| `/api/youtube/download` | Download YouTube media            | GET    |
 
 See the full interactive API docs with Swagger at `/api-docs`.
 
