@@ -13,6 +13,11 @@ const options = {
     servers: [
       {
         url: "http://localhost:3000",
+        description: "Local server",
+      },
+      {
+        url: "https://universaldownloaderapi.vercel.app/",
+        description: "Production server",
       },
     ],
   },
