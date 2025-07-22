@@ -6,7 +6,7 @@ const options = {
     openapi: "3.0.0",
     info: {
       title: "Universal Downloader API",
-      version: "1.3.0",
+      version: "1.4.0",
       description:
         "API to download media from Threads, Reddit, Facebook, Instagram, etc.",
     },
