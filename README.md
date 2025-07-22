@@ -4,7 +4,7 @@
 [![GitHub forks](https://img.shields.io/github/forks/milancodess/universalDownloader?style=social)](https://github.com/milancodess/universalDownloader/network/members)
 
 A universal media downloader API built with Node.js and Express.  
-Download media from Threads, Reddit, Facebook, Instagram, and more — all in one easy-to-use API.
+Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTube, Pinterest and more — all in one easy-to-use API.
 
 ---
 
@@ -12,6 +12,8 @@ Download media from Threads, Reddit, Facebook, Instagram, and more — all in on
 
 - Download media from popular platforms:
   - Facebook & Instagram ( meta )
+  - LinkedIn
+  - Pinterest
   - Reddit
   - Threads
   - TikTok
@@ -65,13 +67,15 @@ Response:
 
 ## API Endpoints
 
-| Endpoint                | Description                       | Method |
-| ----------------------- | --------------------------------- | ------ |
-| `/api/meta/download`    | Download Facebook/Instagram media | GET    |
-| `/api/reddit/download`  | Download Reddit media             | GET    |
-| `/api/threads/download` | Download Threads media            | GET    |
-| `/api/tiktok/download`  | Download TikTok media             | GET    |
-| `/api/youtube/download` | Download YouTube media            | GET    |
+| Endpoint                  | Description                       | Method |
+| ------------------------- | --------------------------------- | ------ |
+| `/api/linkedin/download`  | Download Facebook/Instagram media | GET    |
+| `/api/meta/download`      | Download Facebook/Instagram media | GET    |
+| `/api/pinterest/download` | Download Pinterest media          | GET    |
+| `/api/reddit/download`    | Download Reddit media             | GET    |
+| `/api/threads/download`   | Download Threads media            | GET    |
+| `/api/tiktok/download`    | Download TikTok media             | GET    |
+| `/api/youtube/download`   | Download YouTube media            | GET    |
 
 See the full interactive API docs with Swagger at `/api-docs`.
 

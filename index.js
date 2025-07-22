@@ -1,15 +1,18 @@
 const express = require("express");
 const app = express();
 const facebookInstaRoutes = require("./routes/facebookInsta");
-const setupSwagger = require("./swagger");
+const linkedinRoutes = require("./routes/linkedin");
+const pinterestRoutes = require("./routes/pinterest");
 const tiktokRoutes = require("./routes/tiktok");
 const threadsRoutes = require("./routes/threads");
 const redditRoutes = require("./routes/reddit");
 const youtubeRoutes = require("./routes/youtube");
+const setupSwagger = require("./swagger");
 
 app.use(express.json());
-
+app.use("/api/linkedin", linkedinRoutes);
 app.use("/api/meta", facebookInstaRoutes);
+app.use("/api/pinterest", pinterestRoutes);
 app.use("/api/tiktok", tiktokRoutes);
 app.use("/api/threads", threadsRoutes);
 app.use("/api/reddit", redditRoutes);
