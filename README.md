@@ -11,9 +11,10 @@ Download media from Threads, Reddit, Facebook, Instagram, and more — all in on
 ## Features
 
 - Download media from popular platforms:
-  - Threads
+  - Facebook & Instagram ( meta )
   - Reddit
-  - Facebook & Instagram
+  - Threads
+  - TikTok
 - Easy REST API endpoints
 - Built with JavaScript
 - Swagger API documentation included
@@ -68,6 +69,7 @@ Response:
 | `/api/meta/download`    | Download Facebook/Instagram media | GET    |
 | `/api/reddit/download`  | Download Reddit media             | GET    |
 | `/api/threads/download` | Download Threads media            | GET    |
+| `/api/tiktok/download`  | Download TikTok media             | GET    |
 
 See the full interactive API docs with Swagger at `/api-docs`.
 
