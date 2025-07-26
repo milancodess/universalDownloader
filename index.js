@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+const swaggerUi = require("swagger-ui-express");
 const douyinRoutes = require("./routes/douyin");
 const facebookInstaRoutes = require("./routes/facebookInsta");
 const linkedinRoutes = require("./routes/linkedin");
@@ -12,6 +13,7 @@ const youtubeRoutes = require("./routes/youtube");
 const setupSwagger = require("./swagger");
 
 app.use(express.json());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(setupSwagger));
 app.set("json spaces", 2);
 app.use("/api/douyin", douyinRoutes);
 app.use("/api/linkedin", linkedinRoutes);
@@ -31,8 +33,6 @@ app.get("/", (req, res) => {
     msg: "Universal Downloader API is running.",
   });
 });
-
-setupSwagger(app);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
