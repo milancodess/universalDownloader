@@ -22,7 +22,7 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
   - YouTube
 - Easy REST API endpoints
 - Built with JavaScript
-- Swagger API documentation included
+- **~~Swagger API documentation included~~**
 - Modular architecture: services, controllers, routes
 
 ---
@@ -45,8 +45,8 @@ npm install
 npm start
 ```
 
-2. Access Swagger API docs at:
-   [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+2. Access API at:
+   [http://localhost:3000/](http://localhost:3000/)
 
 3. Example API request to download Instagram media:
 
@@ -81,7 +81,7 @@ Response:
 | `/api/twitter/download`   | Download TikTok media             | GET    |
 | `/api/youtube/download`   | Download YouTube media            | GET    |
 
-See the full interactive API docs with Swagger at `/api-docs`.
+**~~See the full interactive API docs with Swagger at `/api-docs`.~~**
 
 ---
 
