@@ -12,8 +12,7 @@
     "cheerio": "^1.0.0-rc.12",
     "express": "^4.18.2",
     "metadownloader": "^1.0.0",
-    "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-jsdoc": "^6.2.8"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
