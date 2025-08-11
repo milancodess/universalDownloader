@@ -9,7 +9,6 @@ const threadsRoutes = require("./routes/threads");
 const twitterRoutes = require("./routes/twitter");
 const redditRoutes = require("./routes/reddit");
 const youtubeRoutes = require("./routes/youtube");
-const setupSwagger = require("./swagger");
 
 app.use(express.json());
 app.set("json spaces", 2);
