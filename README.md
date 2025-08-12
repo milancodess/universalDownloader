@@ -92,7 +92,6 @@ Response:
 ├── controllers/       # API route handlers
 ├── routes/            # Express route definitions
 ├── services/          # Business logic & downloader functions
-├── swagger.js         # Swagger configuration
 ├── server.js          # Express app entry point
 └── package.json
 ```
