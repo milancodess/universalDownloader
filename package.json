@@ -1,6 +1,6 @@
 {
   "name": "universaldownloader",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -11,8 +11,7 @@
     "axios": "^1.6.8",
     "cheerio": "^1.0.0-rc.12",
     "express": "^4.18.2",
-    "metadownloader": "^1.0.0",
-    "swagger-jsdoc": "^6.2.8"
+    "metadownloader": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
