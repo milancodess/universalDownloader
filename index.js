@@ -1,5 +1,7 @@
 const express = require("express");
+const cors = require("cors");
 const app = express();
+
 const douyinRoutes = require("./routes/douyin");
 const facebookInstaRoutes = require("./routes/facebookInsta");
 const linkedinRoutes = require("./routes/linkedin");
@@ -10,8 +12,13 @@ const twitterRoutes = require("./routes/twitter");
 const redditRoutes = require("./routes/reddit");
 const youtubeRoutes = require("./routes/youtube");
 
+// Enable CORS for all origins (you can restrict later if needed)
+app.use(cors());
+
 app.use(express.json());
 app.set("json spaces", 2);
+
+// Routes
 app.use("/api/douyin", douyinRoutes);
 app.use("/api/linkedin", linkedinRoutes);
 app.use("/api/meta", facebookInstaRoutes);
