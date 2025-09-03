@@ -8,6 +8,12 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
 
 ---
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=milancodess/universalDownloader&type=Date)](https://www.star-history.com/#milancodess/universalDownloader&Date)
+
+---
+
 ## Features
 
 - Download media from popular platforms:
