@@ -1,37 +1,56 @@
 const axios = require("axios");
+const cheerio = require("cheerio");
 
-function extractTikTokId(url) {
-  const match = url.match(/\/video\/(\d+)/);
-  return match ? match[1] : null;
-}
-
-async function fetchTikTokData(videoId) {
-  const apiUrl = `https://api.twitterpicker.com/tiktok/mediav2?id=${videoId}`;
+/**
+ * Scrape TikDownloader.io for TikTok video/audio data.
+ * @param {string} videoUrl - TikTok video URL
+ * @returns {Promise<Object>}
+ */
+async function fetchTikTokData(videoUrl) {
+  const endpoint = "https://tikdownloader.io/api/ajaxSearch";
 
   try {
-    const response = await axios.get(apiUrl, {
-      headers: {
-        accept: "*/*",
-        "accept-language": "en-US,en;q=0.9",
-        priority: "u=1, i",
-        "sec-ch-ua": '"Not)A;Brand";v="8", "Chromium";v="138", "Brave";v="138"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "sec-fetch-dest": "empty",
-        "sec-fetch-mode": "cors",
-        "sec-fetch-site": "cross-site",
-        "sec-gpc": "1",
-        Referer: "https://tiktokdownloader.com/",
-      },
+    const res = await axios.post(
+      endpoint,
+      new URLSearchParams({
+        q: videoUrl,
+        lang: "en",
+      }),
+      {
+        headers: {
+          accept: "*/*",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          "x-requested-with": "XMLHttpRequest",
+          Referer: "https://tikdownloader.io/en",
+        },
+      }
+    );
+
+    const html = res.data.data;
+    const $ = cheerio.load(html);
+
+    const thumbnail = $(".thumbnail img").attr("src") || null;
+    const title = $(".thumbnail h3").text().trim() || null;
+
+    const downloads = [];
+    $(".dl-action a").each((i, el) => {
+      downloads.push({
+        text: $(el).text().trim(),
+        url: $(el).attr("href"),
+      });
     });
 
-    return response.data;
+    return {
+      status: res.data.status,
+      title,
+      thumbnail,
+      downloads,
+    };
   } catch (error) {
-    throw new Error(`TikTok API request failed: ${error.message}`);
+    throw new Error(`TikDownloader request failed: ${error.message}`);
   }
 }
 
 module.exports = {
-  extractTikTokId,
   fetchTikTokData,
 };
