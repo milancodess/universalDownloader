@@ -1,6 +1,6 @@
 {
   "name": "universaldownloader",
-  "version": "1.6.0",
+  "version": "1.6.1",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -15,6 +15,6 @@
     "metadownloader": "^1.0.0"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.1.10"
   }
 }

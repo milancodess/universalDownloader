@@ -24,6 +24,7 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
   - Reddit
   - Threads
   - TikTok
+  - CapCut
   - Twitter ( X )
   - YouTube
 - Easy REST API endpoints
@@ -84,6 +85,7 @@ Response:
 | `/api/reddit/download`    | Download Reddit media             | GET    |
 | `/api/threads/download`   | Download Threads media            | GET    |
 | `/api/tiktok/download`    | Download TikTok media             | GET    |
+| `/api/capcut/download`    | Download CapCut media             | GET    |
 | `/api/twitter/download`   | Download TikTok media             | GET    |
 | `/api/youtube/download`   | Download YouTube media            | GET    |
 

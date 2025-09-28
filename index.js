@@ -11,6 +11,7 @@ const threadsRoutes = require("./routes/threads");
 const twitterRoutes = require("./routes/twitter");
 const redditRoutes = require("./routes/reddit");
 const youtubeRoutes = require("./routes/youtube");
+const capcutRoutes = require("./routes/capcut");
 
 // Enable CORS for all origins (you can restrict later if needed)
 app.use(cors());
@@ -28,6 +29,7 @@ app.use("/api/threads", threadsRoutes);
 app.use("/api/twitter", twitterRoutes);
 app.use("/api/reddit", redditRoutes);
 app.use("/api/youtube", youtubeRoutes);
+app.use("/api/capcut", capcutRoutes);
 
 app.get("/", (req, res) => {
   res.send({
