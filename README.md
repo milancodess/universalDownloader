@@ -25,6 +25,8 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
   - Threads
   - TikTok
   - Twitter ( X )
+  - CapCut
+  - Spotify
   - YouTube
 - Easy REST API endpoints
 - Built with JavaScript
@@ -77,14 +79,16 @@ Response:
 
 | Endpoint                  | Description                       | Method |
 | ------------------------- | --------------------------------- | ------ |
-| `/api/douyin/download`    | Download Facebook/Instagram media | GET    |
-| `/api/linkedin/download`  | Download Facebook/Instagram media | GET    |
+| `/api/douyin/download`    | Download Douyin media             | GET    |
+| `/api/linkedin/download`  | Download LinkedIn media           | GET    |
 | `/api/meta/download`      | Download Facebook/Instagram media | GET    |
 | `/api/pinterest/download` | Download Pinterest media          | GET    |
 | `/api/reddit/download`    | Download Reddit media             | GET    |
 | `/api/threads/download`   | Download Threads media            | GET    |
 | `/api/tiktok/download`    | Download TikTok media             | GET    |
-| `/api/twitter/download`   | Download TikTok media             | GET    |
+| `/api/twitter/download`   | Download Twitter media            | GET    |
+| `/api/capcut/download`    | Download CapCut media             | GET    |
+| `/api/spotify/download`   | Download Spotify media            | GET    |
 | `/api/youtube/download`   | Download YouTube media            | GET    |
 
 **~~See the full interactive API docs with Swagger at `/api-docs`.~~**
