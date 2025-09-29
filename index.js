@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 
+const capcutRoutes = require("./routes/capcut");
 const douyinRoutes = require("./routes/douyin");
 const facebookInstaRoutes = require("./routes/facebookInsta");
 const linkedinRoutes = require("./routes/linkedin");
@@ -19,6 +20,7 @@ app.use(express.json());
 app.set("json spaces", 2);
 
 // Routes
+app.use("/api/capcut", capcutRoutes);
 app.use("/api/douyin", douyinRoutes);
 app.use("/api/linkedin", linkedinRoutes);
 app.use("/api/meta", facebookInstaRoutes);
