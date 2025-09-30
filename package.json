@@ -1,6 +1,6 @@
 {
   "name": "universaldownloader",
-  "version": "1.6.1",
+  "version": "1.6.2",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -12,7 +12,8 @@
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "metadownloader": "^1.0.0"
+    "metadownloader": "^1.0.0",
+    "morgan": "^1.10.1"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
