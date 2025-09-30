@@ -9,24 +9,33 @@ app.use(express.json());
 app.set("json spaces", 2);
 app.use(morgan("dev"));
 
-const routes = {
-  capcut: "./routes/capcut.js",
-  douyin: "./routes/douyin.js",
-  linkedin: "./routes/linkedin.js",
-  meta: "./routes/facebookInsta.js",
-  pinterest: "./routes/pinterest.js",
-  reddit: "./routes/reddit.js",
-  spotify: "./routes/spotify.js",
-  soundcloud: "./routes/soundcloud.js",
-  threads: "./routes/threads.js",
-  tiktok: "./routes/tiktok.js",
-  twitter: "./routes/twitter.js",
-  youtube: "./routes/youtube.js",
-};
+app.use("/api/capcut", require("./routes/capcut"));
+app.use("/api/douyin", require("./routes/douyin"));
+app.use("/api/linkedin", require("./routes/linkedin"));
+app.use("/api/meta", require("./routes/facebookInsta"));
+app.use("/api/pinterest", require("./routes/pinterest"));
+app.use("/api/reddit", require("./routes/reddit"));
+app.use("/api/spotify", require("./routes/spotify"));
+app.use("/api/soundcloud", require("./routes/soundcloud"));
+app.use("/api/threads", require("./routes/threads"));
+app.use("/api/tiktok", require("./routes/tiktok"));
+app.use("/api/twitter", require("./routes/twitter"));
+app.use("/api/youtube", require("./routes/youtube"));
 
-for (const [key, routePath] of Object.entries(routes)) {
-  app.use(`/api/${key}`, require(routePath));
-}
+const endpoints = [
+  "/api/capcut",
+  "/api/douyin",
+  "/api/linkedin",
+  "/api/meta",
+  "/api/pinterest",
+  "/api/reddit",
+  "/api/spotify",
+  "/api/soundcloud",
+  "/api/threads",
+  "/api/tiktok",
+  "/api/twitter",
+  "/api/youtube",
+];
 
 app.get("/", (req, res) => {
   res.status(200).json({
@@ -34,7 +43,7 @@ app.get("/", (req, res) => {
     author: "Milan Bhandari",
     contact: "https://www.milanb.com.np/",
     message: "Universal Downloader API is running",
-    endpoints: Object.keys(routes).map((r) => `/api/${r}`),
+    endpoints,
   });
 });
 
@@ -46,7 +55,7 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
-  console.error("❌ Server Error:", err.message);
+  console.error("❌ Error:", err.message);
   res.status(500).json({
     success: false,
     error: "Internal Server Error",
@@ -55,5 +64,5 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
