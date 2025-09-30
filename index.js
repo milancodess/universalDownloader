@@ -10,18 +10,18 @@ app.set("json spaces", 2);
 app.use(morgan("dev"));
 
 const routes = {
-  capcut: "./routes/capcut",
-  douyin: "./routes/douyin",
-  linkedin: "./routes/linkedin",
-  meta: "./routes/facebookInsta",
-  pinterest: "./routes/pinterest",
-  reddit: "./routes/reddit",
-  spotify: "./routes/spotify",
-  soundcloud: "./routes/soundcloud",
-  threads: "./routes/threads",
-  tiktok: "./routes/tiktok",
-  twitter: "./routes/twitter",
-  youtube: "./routes/youtube",
+  capcut: "./routes/capcut.js",
+  douyin: "./routes/douyin.js",
+  linkedin: "./routes/linkedin.js",
+  meta: "./routes/facebookInsta.js",
+  pinterest: "./routes/pinterest.js",
+  reddit: "./routes/reddit.js",
+  spotify: "./routes/spotify.js",
+  soundcloud: "./routes/soundcloud.js",
+  threads: "./routes/threads.js",
+  tiktok: "./routes/tiktok.js",
+  twitter: "./routes/twitter.js",
+  youtube: "./routes/youtube.js",
 };
 
 for (const [key, routePath] of Object.entries(routes)) {
