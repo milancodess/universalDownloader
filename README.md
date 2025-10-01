@@ -27,6 +27,7 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
   - Spotify
   - Threads
   - TikTok
+  - Tumblr
   - Twitter ( X )
   - YouTube
 - Easy REST API endpoints
@@ -90,6 +91,7 @@ Response:
 | `/api/spotify/download`    | Download Spotify media            | GET    |
 | `/api/threads/download`    | Download Threads media            | GET    |
 | `/api/tiktok/download`     | Download TikTok media             | GET    |
+| `/api/tumblr/download`     | Download Tumblr media             | GET    |
 | `/api/twitter/download`    | Download Twitter media            | GET    |
 | `/api/youtube/download`    | Download YouTube media            | GET    |
 
