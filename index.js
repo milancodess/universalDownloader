@@ -16,6 +16,7 @@ app.use("/api/meta", require("./routes/facebookInsta"));
 app.use("/api/pinterest", require("./routes/pinterest"));
 app.use("/api/reddit", require("./routes/reddit"));
 app.use("/api/spotify", require("./routes/spotify"));
+app.use("/api/snapchat", require("./routes/snapchat"));
 app.use("/api/soundcloud", require("./routes/soundcloud"));
 app.use("/api/threads", require("./routes/threads"));
 app.use("/api/tiktok", require("./routes/tiktok"));
@@ -29,6 +30,7 @@ const endpoints = [
   "/api/meta",
   "/api/pinterest",
   "/api/reddit",
+  "/api/snapchat",
   "/api/spotify",
   "/api/soundcloud",
   "/api/threads",

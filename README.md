@@ -23,6 +23,7 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
   - LinkedIn
   - Pinterest
   - Reddit
+  - Snapchat
   - Soundcloud
   - Spotify
   - Threads
@@ -86,6 +87,7 @@ Response:
 | `/api/meta/download`       | Download Facebook/Instagram media | GET    |
 | `/api/pinterest/download`  | Download Pinterest media          | GET    |
 | `/api/reddit/download`     | Download Reddit media             | GET    |
+| `/api/snapchat/download`   | Download Snapchat media           | GET    |
 | `/api/soundcloud/download` | Download Soundcloud media         | GET    |
 | `/api/spotify/download`    | Download Spotify media            | GET    |
 | `/api/threads/download`    | Download Threads media            | GET    |
