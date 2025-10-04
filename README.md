@@ -20,6 +20,7 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
 
 - Download media from popular platforms:
   - CapCut
+  - Dailymotion
   - Douyin
   - Facebook & Instagram ( meta )
   - LinkedIn
@@ -85,6 +86,7 @@ Response:
 | Endpoint                   | Description                       | Method |
 | -------------------------- | --------------------------------- | ------ |
 | `/api/capcut/download`     | Download CapCut media             | GET    |
+| `/api/dailymotion/download`| Download Dailymotion media        | GET    |
 | `/api/douyin/download`     | Download Douyin media             | GET    |
 | `/api/linkedin/download`   | Download LinkedIn media           | GET    |
 | `/api/meta/download`       | Download Facebook/Instagram media | GET    |
