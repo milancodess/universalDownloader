@@ -1,15 +1,15 @@
-const { fetchKuaishouMedia } = require("../services/kuaishouService");
+const { scrapeKuaishou } = require("../services/kuaishouService");
 
 async function handleKuaishouDownload(req, res) {
-  const { url } = req.body;
+  const { url } = req.query;
   if (!url) {
     return res
       .status(400)
-      .json({ success: false, error: "Missing 'url' in request body." });
+      .json({ success: false, error: "Missing 'url' query parameter." });
   }
 
   try {
-    const data = await fetchKuaishouMedia(url);
+    const data = await scrapeKuaishou(url);
     res.json({ success: true, data });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

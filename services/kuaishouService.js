@@ -1,6 +1,6 @@
 const axios = require("axios");
 
-async function fetchKuaishouMedia(videoUrl) {
+async function scrapeKuaishou(videoUrl) {
   if (!videoUrl) throw new Error("Missing video URL");
 
   try {
@@ -26,14 +26,12 @@ async function fetchKuaishouMedia(videoUrl) {
       }
     );
 
-    if (!response.data) {
-      throw new Error("No data returned from KuaiShou API");
-    }
-
     return response.data;
   } catch (error) {
-    throw new Error("Failed to fetch KuaiShou media: " + error.message);
+    throw new Error(
+      `Error scraping Kuaishou video: ${error.response?.data || error.message}`
+    );
   }
 }
 
-module.exports = { fetchKuaishouMedia };
+module.exports = { scrapeKuaishou };
