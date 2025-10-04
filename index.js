@@ -13,6 +13,7 @@ app.use("/api/bluesky", require("./routes/bluesky"));
 app.use("/api/capcut", require("./routes/capcut"));
 app.use("/api/dailymotion", require("./routes/dailymotion"));
 app.use("/api/douyin", require("./routes/douyin"));
+app.use("/api/kuaishou", require("./routes/kuaishou"));
 app.use("/api/linkedin", require("./routes/linkedin"));
 app.use("/api/meta", require("./routes/facebookInsta"));
 app.use("/api/pinterest", require("./routes/pinterest"));
@@ -31,6 +32,7 @@ const endpoints = [
   "/api/capcut",
   "/api/dailymotion",
   "/api/douyin",
+  "/api/kuaishou",
   "/api/linkedin",
   "/api/meta",
   "/api/pinterest",
