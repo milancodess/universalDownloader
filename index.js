@@ -10,6 +10,7 @@ app.set("json spaces", 2);
 app.use(morgan("dev"));
 
 app.use("/api/capcut", require("./routes/capcut"));
+app.use("/api/dailymotion", require("./routes/dailymotion"));
 app.use("/api/douyin", require("./routes/douyin"));
 app.use("/api/linkedin", require("./routes/linkedin"));
 app.use("/api/meta", require("./routes/facebookInsta"));
@@ -26,6 +27,7 @@ app.use("/api/youtube", require("./routes/youtube"));
 
 const endpoints = [
   "/api/capcut",
+  "/api/dailymotion",
   "/api/douyin",
   "/api/linkedin",
   "/api/meta",
