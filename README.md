@@ -19,6 +19,7 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
 ## Features
 
 - Download media from popular platforms:
+  - Bluesky
   - CapCut
   - Douyin
   - Facebook & Instagram ( meta )
@@ -84,6 +85,7 @@ Response:
 
 | Endpoint                   | Description                       | Method |
 | -------------------------- | --------------------------------- | ------ |
+| `/api/bluesky/download`    | Download Bluesky media            | GET    |
 | `/api/capcut/download`     | Download CapCut media             | GET    |
 | `/api/douyin/download`     | Download Douyin media             | GET    |
 | `/api/linkedin/download`   | Download LinkedIn media           | GET    |

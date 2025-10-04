@@ -9,6 +9,7 @@ app.use(express.json());
 app.set("json spaces", 2);
 app.use(morgan("dev"));
 
+app.use("/api/bluesky", require("./routes/bluesky"));
 app.use("/api/capcut", require("./routes/capcut"));
 app.use("/api/douyin", require("./routes/douyin"));
 app.use("/api/linkedin", require("./routes/linkedin"));
@@ -25,6 +26,7 @@ app.use("/api/twitter", require("./routes/twitter"));
 app.use("/api/youtube", require("./routes/youtube"));
 
 const endpoints = [
+  "/api/bluesky",
   "/api/capcut",
   "/api/douyin",
   "/api/linkedin",
