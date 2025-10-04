@@ -1,6 +1,6 @@
 {
   "name": "universaldownloader",
-  "version": "1.6.6",
+  "version": "1.6.7",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {

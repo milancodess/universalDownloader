@@ -1,7 +1,6 @@
 const axios = require("axios");
 const qs = require("qs");
 const cheerio = require("cheerio");
-const { format } = require("morgan");
 
 /**
  * Fetch Dailymotion download info
@@ -41,17 +40,17 @@ async function fetchDailymotionData(videoUrl) {
     const $ = cheerio.load(html);
 
     // Extract title, thumbnail, and download links
-    const title = $("p strong")
-      .first()
-      .text()
-      .replace("Title：", "")
-      .trim();
+    const title = $("p strong").first().text().replace("Title：", "").trim();
 
     const thumbnail = $("img").attr("src");
 
     const downloadLinks = [];
     $("a.button.primary").each((_, el) => {
-      const quality = $(el).find("span").text().replace("Download (", "").replace(")", "");
+      const quality = $(el)
+        .find("span")
+        .text()
+        .replace("Download (", "")
+        .replace(")", "");
       const link = $(el).attr("href");
       if (link && link.startsWith("https://")) {
         downloadLinks.push({ quality, url: link });
