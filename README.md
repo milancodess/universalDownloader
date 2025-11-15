@@ -64,7 +64,9 @@ npm start
 2. Access API at:
    [http://localhost:3000/](http://localhost:3000/)
 
-3. Example API request to download Instagram media:
+3. Visit the built-in playground UI at [http://localhost:3000](http://localhost:3000).
+
+4. Example API request to download Instagram media:
 
 ```
 GET http://localhost:3000/api/meta/download?url=https://www.instagram.com/p/DLHQfPiyucu/
@@ -80,6 +82,22 @@ Response:
   }
 }
 ```
+
+---
+
+## Frontend playground
+
+- The `/public` directory now contains a lightweight single-page interface.
+- The Express server automatically serves this UI, so landing on `/` opens the playground.
+- Select any provider, paste a content URL, and inspect both the raw JSON response and the detected download links in one place.
+
+---
+
+## Deploying to Vercel
+
+1. Ensure dependencies are installed with `npm install` and the server works locally via `npm run dev`.
+2. Authenticate with the Vercel CLI (`npm i -g vercel` and `vercel login`) or connect the GitHub repo to a Vercel project.
+3. Deploy with `vercel --prod` (CLI) or by pushing to your default branch to trigger the GitHub → Vercel pipeline.
 
 ---
 

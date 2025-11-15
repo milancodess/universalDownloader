@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Universal Downloader</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <div class="page">
+      <header class="hero">
+        <p class="eyebrow">Self-hosted media toolkit</p>
+        <h1>Universal Downloader</h1>
+        <p class="lede">
+          Hit any supported platform, pass a URL, and receive structured download
+          metadata in seconds. The UI below is a friendly wrapper over the
+          public REST API that this repo exposes.
+        </p>
+        <div class="hero-actions">
+          <a class="cta" href="https://github.com/milancodess/universalDownloader"
+            >View on GitHub</a
+          >
+          <a class="cta ghost" href="/api" target="_blank" rel="noreferrer"
+            >API status JSON</a
+          >
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Playground</p>
+              <h2>Call any endpoint</h2>
+            </div>
+            <span class="pill" id="endpointCount"></span>
+          </div>
+          <form id="downloadForm" novalidate>
+            <label class="field">
+              <span>Platform</span>
+              <select id="platform" required>
+                <option value="" selected disabled>Select a platform</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Content URL</span>
+              <input
+                type="url"
+                id="contentUrl"
+                name="url"
+                placeholder="https://www.instagram.com/p/..."
+                required
+              />
+            </label>
+            <button type="submit" id="submitButton">Fetch media</button>
+          </form>
+          <p class="status" id="statusMessage">Pick a platform to begin.</p>
+          <div class="helper">
+            <p>
+              Requests are performed with a simple <code>GET</code> to
+              <code>/api/&lt;platform&gt;/download?url=&lt;media URL&gt;</code>. Check the
+              response panel for parsed JSON and detected download links.
+            </p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Live response</p>
+              <h2>API output</h2>
+            </div>
+            <button class="ghost" id="copyButton">Copy JSON</button>
+          </div>
+          <pre id="responseOutput">Submit a request to preview the payload...</pre>
+          <div id="links" class="links-grid"></div>
+        </section>
+      </main>
+
+      <section class="panel wide">
+        <div class="panel-header">
+          <div>
+            <p class="eyebrow">Coverage</p>
+            <h2>Supported endpoints</h2>
+          </div>
+        </div>
+        <div class="endpoint-grid" id="endpointGrid"></div>
+      </section>
+
+      <section class="panel wide how">
+        <div>
+          <h3>How to redeploy</h3>
+          <ol>
+            <li>Update environment variables or secrets on Vercel as needed.</li>
+            <li>Run <code>npm install</code> then <code>npm run dev</code> locally to verify.</li>
+            <li>Push to <code>main</code> (or open a PR) to trigger a fresh Vercel deploy.</li>
+          </ol>
+        </div>
+        <div>
+          <h3>Need a direct API link?</h3>
+          <p>
+            Every endpoint uses the same contract: send a <code>url</code> query and
+            receive back download metadata. You can still copy/paste the URL into
+            your own scripts, Postman collections, or production workloads.
+          </p>
+        </div>
+      </section>
+
+      <footer>
+        <p>
+          Built with ❤️ by <a href="https://www.milanb.com.np/" target="_blank" rel="noreferrer">Milan</a>
+          and the open-source community.
+        </p>
+      </footer>
+    </div>
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

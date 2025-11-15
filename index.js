@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const cors = require("cors");
 const morgan = require("morgan");
@@ -8,6 +9,7 @@ app.use(cors());
 app.use(express.json());
 app.set("json spaces", 2);
 app.use(morgan("dev"));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/bluesky", require("./routes/bluesky"));
 app.use("/api/capcut", require("./routes/capcut"));
@@ -48,11 +50,22 @@ const endpoints = [
 ];
 
 app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/api", (req, res) => {
   res.status(200).json({
     success: true,
     author: "Milan Bhandari",
     contact: "https://www.milanb.com.np/",
     message: "Universal Downloader API is running",
+    endpoints,
+  });
+});
+
+app.get("/api/endpoints", (req, res) => {
+  res.status(200).json({
+    success: true,
     endpoints,
   });
 });

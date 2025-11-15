@@ -1,7 +1,6 @@
 package-lock.json
 node_modules/
 test.js
-public/
 swagger.js
 .vercel
 ignore/
