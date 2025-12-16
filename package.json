@@ -1,6 +1,6 @@
 {
   "name": "universaldownloader",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -14,7 +14,7 @@
     "express": "^4.18.2",
     "metadownloader": "^1.0.0",
     "morgan": "^1.10.1",
-    "qs": "^6.11.2" 
+    "qs": "^6.11.2"
   },
   "devDependencies": {
     "nodemon": "^3.0.1"
