@@ -21,6 +21,7 @@ app.use("/api/reddit", require("./routes/reddit"));
 app.use("/api/spotify", require("./routes/spotify"));
 app.use("/api/snapchat", require("./routes/snapchat"));
 app.use("/api/soundcloud", require("./routes/soundcloud"));
+app.use("/api/terabox", require("./routes/terabox"));
 app.use("/api/threads", require("./routes/threads"));
 app.use("/api/tiktok", require("./routes/tiktok"));
 app.use("/api/tumblr", require("./routes/tumblr"));
@@ -40,6 +41,7 @@ const endpoints = [
   "/api/snapchat",
   "/api/spotify",
   "/api/soundcloud",
+  "/api/terabox",
   "/api/threads",
   "/api/tiktok",
   "/api/tumblr",
