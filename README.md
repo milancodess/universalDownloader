@@ -31,6 +31,7 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
   - Snapchat
   - Soundcloud
   - Spotify
+  - Terabox
   - Threads
   - TikTok
   - Tumblr
@@ -99,6 +100,7 @@ Response:
 | `/api/snapchat/download`    | Download Snapchat media           | GET    |
 | `/api/soundcloud/download`  | Download Soundcloud media         | GET    |
 | `/api/spotify/download`     | Download Spotify media            | GET    |
+| `/api/terabox/download`     | Download Terabox media            | GET    |
 | `/api/threads/download`     | Download Threads media            | GET    |
 | `/api/tiktok/download`      | Download TikTok media             | GET    |
 | `/api/tumblr/download`      | Download Tumblr media             | GET    |
