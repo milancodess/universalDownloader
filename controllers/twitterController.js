@@ -1,4 +1,4 @@
-const { downloadTwmateData } = require("../services/twitterService");
+const { twitterDownloader } = require("../services/twitterService");
 
 async function handleTwitterDownload(req, res) {
   const { url } = req.query;
@@ -10,7 +10,7 @@ async function handleTwitterDownload(req, res) {
   }
 
   try {
-    const data = await downloadTwmateData(url);
+    const data = await twitterDownloader(url);
     res.json({ success: true, data });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
