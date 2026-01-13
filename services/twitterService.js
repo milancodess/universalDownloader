@@ -1,39 +1,96 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-async function downloadTwmateData(twitterUrl) {
-  twitterUrl = twitterUrl.replace("x.com", "twitter.com");
+/**
+ * Twitter / X Downloader Service
+ * @param {string} tweetUrl
+ */
+async function twitterDownloader(tweetUrl) {
+  if (!tweetUrl) throw new Error("Tweet URL is required");
 
-  const formData = `page=${encodeURIComponent(twitterUrl)}&ftype=all`;
+  const endpoint = "https://savetwitter.net/api/ajaxSearch";
 
-  const { data } = await axios.post("https://twmate.com/en2/", formData, {
+  const form = new URLSearchParams({
+    q: tweetUrl,
+    lang: "en",
+    cftoken: "",
+  });
+
+  const { data } = await axios.post(endpoint, form.toString(), {
     headers: {
-      "content-type": "application/x-www-form-urlencoded",
+      "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+      origin: "https://savetwitter.net",
+      referer: "https://savetwitter.net/en4",
+      "x-requested-with": "XMLHttpRequest",
       "user-agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-      referer: "https://twmate.com/en2/",
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
     },
+    timeout: 15000,
   });
 
-  const $ = cheerio.load(data);
-  const results = [];
-
-  $(".files-table tbody tr").each((_, row) => {
-    const tds = $(row).find("td");
-    if (tds.length < 3) return;
-
-    results.push({
-      quality: tds.eq(0).text().trim(),
-      type: tds.eq(1).text().trim(),
-      url: tds.eq(2).find("a.btn-dl").attr("href"),
-    });
-  });
-
-  if (!results.length) {
-    throw new Error("No download links found");
+  if (data.status !== "ok") {
+    throw new Error("Failed to fetch Twitter media");
   }
 
-  return results;
+  const $ = cheerio.load(data.data);
+
+  const tweetId = $("#TwitterId").val() || null;
+  const title =
+    $(".tw-middle h3").first().text().trim() || null;
+  const duration =
+    $(".tw-middle p").first().text().trim() || null;
+  const thumbnail =
+    $(".thumbnail img").attr("src") ||
+    $(".download-items__thumb img").attr("src") ||
+    null;
+
+  const videos = [];
+  const images = [];
+
+  // Video links
+  $(".tw-button-dl").each((_, el) => {
+    const href = $(el).attr("href");
+    const text = $(el).text();
+
+    if (!href || !href.includes("dl.snapcdn.app")) return;
+
+    // MP4 videos
+    if (text.includes("MP4")) {
+      const qualityMatch = text.match(/\((\d+p)\)/);
+      videos.push({
+        quality: qualityMatch ? qualityMatch[1] : "unknown",
+        url: href,
+      });
+    }
+
+    // Image download button
+    if (text.includes("图片")) {
+      images.push({ url: href });
+    }
+  });
+
+  // Photo-only tweets
+  $(".photo-list img").each((_, img) => {
+    const src = $(img).attr("src");
+    if (src) images.push({ url: src });
+  });
+
+  // Sort videos: highest → lowest quality
+  videos.sort((a, b) => {
+    const qa = parseInt(a.quality) || 0;
+    const qb = parseInt(b.quality) || 0;
+    return qb - qa;
+  });
+
+  return {
+    type: videos.length ? "video" : "photo",
+    tweetId,
+    title,
+    duration,
+    thumbnail,
+    videos,
+    images,
+  };
 }
 
-module.exports = { downloadTwmateData };
+module.exports = { twitterDownloader };
