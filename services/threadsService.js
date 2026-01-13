@@ -1,13 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
 
-/**
- * Threads Downloader Service
- * @param {string} postUrl
- */
 async function threadsDownloader(postUrl) {
-  if (!postUrl) throw new Error("Threads URL is required");
-
   const endpoint = "https://lovethreads.net/api/ajaxSearch";
 
   const form = new URLSearchParams({
@@ -22,70 +16,81 @@ async function threadsDownloader(postUrl) {
       origin: "https://lovethreads.net",
       referer: "https://lovethreads.net/en",
       "x-requested-with": "XMLHttpRequest",
-      "user-agent":
-        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
     },
-    timeout: 15000,
   });
 
-  if (data.status !== "ok") {
-    throw new Error("Failed to fetch Threads media");
-  }
+  if (data.status !== "ok") throw new Error("Failed");
 
   const $ = cheerio.load(data.data);
 
+  const photos = [];
   const videos = [];
-  const images = [];
 
-  // Thumbnail
-  const thumbnail =
-    $(".download-items__thumb img").attr("src") || null;
+  $(".download-box > li").each((index, li) => {
+    const item = $(li);
 
-  // Video download
-  $(".download-items__btn a[title='Download Video']").each((_, el) => {
-    const href = $(el).attr("href");
-    if (!href) return;
+    /* ───────────── PHOTO ───────────── */
+    if (item.find(".icon-dlimage").length) {
+      const thumbnail = item
+        .find(".download-items__thumb img")
+        .attr("src");
 
-    videos.push({
-      quality: "unknown",
-      url: href,
-    });
+      const variants = [];
+
+      item.find(".photo-option option").each((_, opt) => {
+        const url = $(opt).attr("value");
+        const label = $(opt).text().trim();
+
+        if (!url || !label.includes("x")) return;
+
+        const [width, height] = label.split("x").map(Number);
+
+        variants.push({
+          resolution: label,
+          width,
+          height,
+          url,
+        });
+      });
+
+      variants.sort(
+        (a, b) => b.width * b.height - a.width * a.height
+      );
+
+      photos.push({
+        index: photos.length + 1,
+        thumbnail,
+        variants,
+      });
+    }
+
+    /* ───────────── VIDEO ───────────── */
+    if (item.find(".icon-dlvideo").length) {
+      const thumbnail = item
+        .find(".download-items__thumb img")
+        .attr("src");
+
+      const videoUrl = item
+        .find('a[title="Download Video"]')
+        .attr("href");
+
+      if (!videoUrl) return;
+
+      videos.push({
+        index: videos.length + 1,
+        thumbnail,
+        url: videoUrl,
+        format: "mp4",
+      });
+    }
   });
-
-  // Image resolutions (dropdown)
-  $(".photo-option select option").each((_, opt) => {
-    const url = $(opt).attr("value");
-    const label = $(opt).text().trim(); // e.g. 1350x1080
-
-    if (!url || !label.includes("x")) return;
-
-    const [width, height] = label.split("x").map(Number);
-
-    images.push({
-      resolution: label,
-      width,
-      height,
-      url,
-    });
-  });
-
-  // Sort images highest → lowest resolution
-  images.sort((a, b) => {
-    const ra = a.width * a.height;
-    const rb = b.width * b.height;
-    return rb - ra;
-  });
-
-  const postId =
-    postUrl.split("/post/")[1]?.split("?")[0] || null;
 
   return {
     platform: "threads",
-    type: videos.length ? "video" : "photo",
-    postId,
-    thumbnail,
+    photoCount: photos.length,
+    videoCount: videos.length,
+    photos,
     videos,
-    images,
   };
 }
 
