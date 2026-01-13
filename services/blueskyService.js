@@ -14,46 +14,50 @@ async function fetchBlueskyMedia(postUrl) {
   });
 
   const $ = cheerio.load(html);
-
   const section = $("section.download_result_section");
 
   /* ───────────── PROFILE ───────────── */
-  const profileBox = section.find(".download__item__profile_pic");
+  const profileBox = section.find(".download__item__profile_pic").first();
 
   const profile = {
     name:
       profileBox
         .find("div")
+        .first()
         .contents()
         .filter((_, el) => el.type === "text")
         .text()
         .trim() || null,
 
-    handle: profileBox.find("span").text().trim() || null,
+    handle: profileBox.find("span").first().text().trim() || null,
 
-    avatar: profileBox.find("img").attr("src") || null,
+    avatar: profileBox.find("img").first().attr("src") || null,
   };
 
   /* ───────────── CAPTION ───────────── */
   const caption =
-    section.find(".download__item__caption__text").text().trim() || null;
+    section
+      .find(".download__item__caption__text")
+      .first()
+      .text()
+      .trim() || null;
 
   const photos = [];
   const videos = [];
 
-  /* ───────────── MEDIA ITEMS ───────────── */
+  /* ───────────── MEDIA ───────────── */
   section.find(".download_item").each((_, el) => {
     const item = $(el);
 
     /* IMAGE */
     if (item.find(".image_wrapper img").length) {
-      const img = item.find(".image_wrapper img");
+      const img = item.find(".image_wrapper img").first();
 
-      const imageUrl = item
+      const url = item
         .find("a.download__item__info__actions__button")
         .attr("href");
 
-      if (!imageUrl) return;
+      if (!url) return;
 
       photos.push({
         index: photos.length + 1,
@@ -61,7 +65,7 @@ async function fetchBlueskyMedia(postUrl) {
         variants: [
           {
             resolution: "best",
-            url: imageUrl,
+            url,
           },
         ],
       });
@@ -69,23 +73,22 @@ async function fetchBlueskyMedia(postUrl) {
 
     /* VIDEO */
     if (item.find(".video_wrapper video").length) {
-      const video = item.find(".video_wrapper video");
+      const video = item.find(".video_wrapper video").first();
 
-      const videoUrl = video.attr("src");
-
-      if (!videoUrl) return;
+      const url = video.attr("src");
+      if (!url) return;
 
       videos.push({
         index: videos.length + 1,
         thumbnail: video.attr("poster") || null,
-        url: videoUrl,
+        url,
         format: "mp4",
       });
     }
   });
 
   if (!photos.length && !videos.length) {
-    throw new Error("No media found in this Bluesky post");
+    throw new Error("No media found");
   }
 
   return {
@@ -99,4 +102,4 @@ async function fetchBlueskyMedia(postUrl) {
   };
 }
 
-module.exports = { fetchBlueskyMedia };
+module.exports = {fetchBlueskyMedia};
