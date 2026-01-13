@@ -2,67 +2,101 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 
 async function fetchBlueskyMedia(postUrl) {
-  const encodedUrl = encodeURIComponent(postUrl);
-  const fullUrl = `https://bskysaver.com/download?url=${encodedUrl}`;
+  const url =
+    "https://bskysaver.com/download?url=" + encodeURIComponent(postUrl);
 
-  try {
-    const response = await axios.get(fullUrl, {
-      headers: {
-        accept:
-          "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-        "accept-language": "en-US,en;q=0.9",
-        "sec-ch-ua":
-          '"Chromium";v="140", "Not=A?Brand";v="24", "Brave";v="140"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "upgrade-insecure-requests": "1",
-      },
-    });
+  const { data: html } = await axios.get(url, {
+    headers: {
+      "user-agent":
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+      referer: "https://bskysaver.com/",
+    },
+  });
 
-    const $ = cheerio.load(response.data);
+  const $ = cheerio.load(html);
 
-    const section = $("section.content__section.download_result_section");
+  const section = $("section.download_result_section");
 
-    const videoUrl = section.find("video").attr("src") || null;
-    const thumbnail = section.find("video").attr("poster") || null;
+  /* ───────────── PROFILE ───────────── */
+  const profileBox = section.find(".download__item__profile_pic");
 
-    const profileImg =
-      section.find(".download__item__profile_pic img").attr("src") || null;
-    const name =
-      section
-        .find(".download__item__profile_pic div")
-        .first()
+  const profile = {
+    name:
+      profileBox
+        .find("div")
         .contents()
-        .filter(function () {
-          return this.type === "text";
-        })
+        .filter((_, el) => el.type === "text")
         .text()
-        .trim() || null;
-    const handle =
-      section.find(".download__item__profile_pic span").text().trim() || null;
+        .trim() || null,
 
-    const caption =
-      section.find(".download__item__caption__text").text().trim() || null;
-    const downloadLink = section.find("table tr td a.btn").attr("href") || null;
+    handle: profileBox.find("span").text().trim() || null,
 
-    if (!videoUrl && !downloadLink) {
-      throw new Error("No media found in the provided Bluesky post.");
+    avatar: profileBox.find("img").attr("src") || null,
+  };
+
+  /* ───────────── CAPTION ───────────── */
+  const caption =
+    section.find(".download__item__caption__text").text().trim() || null;
+
+  const photos = [];
+  const videos = [];
+
+  /* ───────────── MEDIA ITEMS ───────────── */
+  section.find(".download_item").each((_, el) => {
+    const item = $(el);
+
+    /* IMAGE */
+    if (item.find(".image_wrapper img").length) {
+      const img = item.find(".image_wrapper img");
+
+      const imageUrl = item
+        .find("a.download__item__info__actions__button")
+        .attr("href");
+
+      if (!imageUrl) return;
+
+      photos.push({
+        index: photos.length + 1,
+        thumbnail: img.attr("src"),
+        variants: [
+          {
+            resolution: "best",
+            url: imageUrl,
+          },
+        ],
+      });
     }
 
-    return {
-      profile: {
-        name,
-        handle,
-        profileImg,
-      },
-      caption,
-      videoUrl,
-      thumbnail,
-      downloadLink,
-    };
-  } catch (error) {
-    throw new Error("Failed to scrape Bluesky media: " + error.message);
+    /* VIDEO */
+    if (item.find(".video_wrapper video").length) {
+      const video = item.find(".video_wrapper video");
+
+      const videoUrl = video.attr("src");
+
+      if (!videoUrl) return;
+
+      videos.push({
+        index: videos.length + 1,
+        thumbnail: video.attr("poster") || null,
+        url: videoUrl,
+        format: "mp4",
+      });
+    }
+  });
+
+  if (!photos.length && !videos.length) {
+    throw new Error("No media found in this Bluesky post");
   }
+
+  return {
+    platform: "bluesky",
+    profile,
+    caption,
+    photoCount: photos.length,
+    videoCount: videos.length,
+    photos,
+    videos,
+  };
 }
 
 module.exports = { fetchBlueskyMedia };
