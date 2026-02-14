@@ -18,16 +18,24 @@ async function fetchYouTubeData(url) {
       body.toString(),
       {
         headers: {
-          accept: "*/*",
-          "content-type": "application/x-www-form-urlencoded",
-          referer: "https://vidssave.com/",
+          "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+          accept: "application/json, text/plain, */*",
           origin: "https://vidssave.com",
-          "user-agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
-          "accept-language": "en-US,en;q=0.9",
+          referer: "https://vidssave.com/",
           "sec-fetch-site": "same-origin",
           "sec-fetch-mode": "cors",
           "sec-fetch-dest": "empty",
+          "user-agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
+            "(KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+          "sec-ch-ua":
+            '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"',
+          "sec-ch-ua-mobile": "?0",
+          "sec-ch-ua-platform": '"Windows"',
+          "accept-language": "en-US,en;q=0.9",
+          "accept-encoding": "gzip, deflate, br",
+          connection: "keep-alive",
+          "x-requested-with": "XMLHttpRequest",
         },
         timeout: 15000,
       },
