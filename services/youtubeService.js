@@ -21,7 +21,15 @@ async function fetchYouTubeData(url) {
           accept: "*/*",
           "content-type": "application/x-www-form-urlencoded",
           referer: "https://vidssave.com/",
+          origin: "https://vidssave.com",
+          "user-agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120 Safari/537.36",
+          "accept-language": "en-US,en;q=0.9",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
         },
+        timeout: 15000,
       },
     );
 
