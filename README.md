@@ -36,7 +36,7 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
   - TikTok
   - Tumblr
   - Twitter ( X )
-  - YouTube
+  - ~~YouTube~~
 - Easy REST API endpoints
 - Built with JavaScript
 - **~~Swagger API documentation included~~**
@@ -105,7 +105,6 @@ Response:
 | `/api/tiktok/download`      | Download TikTok media             | GET    |
 | `/api/tumblr/download`      | Download Tumblr media             | GET    |
 | `/api/twitter/download`     | Download Twitter media            | GET    |
-| `/api/youtube/download`     | Download YouTube media            | GET    |
 
 **~~See the full interactive API docs with Swagger at `/api-docs`.~~**
 
