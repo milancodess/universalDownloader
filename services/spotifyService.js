@@ -1,11 +1,5 @@
 const axios = require("axios");
 
-/**
- * Fetch Spotify track data
- *
- * @param {string} url - Spotify track URL
- * @returns {Promise<Object>}
- */
 async function fetchSpotify(url) {
   if (!url || typeof url !== "string") {
     throw new Error("A valid Spotify URL must be provided");
@@ -13,35 +7,41 @@ async function fetchSpotify(url) {
 
   try {
     const res = await axios.post(
-      "https://songsnatch-2.emergent.host/api/download",
+      "https://musicfab.io/api/spotify",
       { url },
       {
         headers: {
-          accept: "*/*",
-          "content-type": "application/json",
-          origin: "https://spotihelper.com",
-          referer: "https://spotihelper.com/",
-          "user-agent":
-            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36",
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Referer: "https://musicfab.io/",
+          Origin: "https://musicfab.io",
         },
-        timeout: 10000,
-      }
+        timeout: 15000,
+        validateStatus: (status) => status < 500,
+      },
     );
 
-    // IMPORTANT: return response as-is
+    if (res.status >= 400) {
+      throw new Error(`MusicFab API error: ${res.status}`);
+    }
+
     return res.data;
   } catch (err) {
+    if (err.code === "ECONNABORTED") {
+      throw new Error("Request timeout from MusicFab API");
+    }
+
     if (err.response) {
       throw new Error(
-        `Spotify downloader API error: ${err.response.status} ${err.response.statusText}`
+        `MusicFab API error: ${err.response.status} ${err.response.statusText}`,
       );
     }
 
     if (err.request) {
-      throw new Error("No response received from Spotify downloader API");
+      throw new Error("No response received from MusicFab API");
     }
 
-    throw new Error(`Spotify downloader request failed: ${err.message}`);
+    throw new Error(`Request failed: ${err.message}`);
   }
 }
 
