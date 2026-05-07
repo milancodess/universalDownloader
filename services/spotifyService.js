@@ -13,13 +13,24 @@ async function fetchSpotify(url) {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
+          Referer: "https://musicfab.io/",
+          Origin: "https://musicfab.io",
         },
-        timeout: 10000,
+        timeout: 15000,
+        validateStatus: (status) => status < 500,
       },
     );
 
+    if (res.status >= 400) {
+      throw new Error(`MusicFab API error: ${res.status}`);
+    }
+
     return res.data;
   } catch (err) {
+    if (err.code === "ECONNABORTED") {
+      throw new Error("Request timeout from MusicFab API");
+    }
+
     if (err.response) {
       throw new Error(
         `MusicFab API error: ${err.response.status} ${err.response.statusText}`,
