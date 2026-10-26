@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
 
 async function threadsDownloader(postUrl) {
@@ -19,7 +19,9 @@ async function threadsDownloader(postUrl) {
     },
   });
 
-  if (data.status !== "ok") throw new Error("Failed");
+  if (!data || data.status !== "ok" || typeof data.data !== "string") {
+    throw new Error("Invalid response from LoveThreads");
+  }
 
   const $ = cheerio.load(data.data);
 
@@ -41,9 +43,12 @@ async function threadsDownloader(postUrl) {
         const url = $(opt).attr("value");
         const label = $(opt).text().trim();
 
-        if (!url || !label.includes("x")) return;
+        const dimensions = label.match(/^(\d+)\s*[x×]\s*(\d+)$/i);
+        if (!url || url.startsWith("#") || !dimensions) return;
 
-        const [width, height] = label.split("x").map(Number);
+        const width = Number(dimensions[1]);
+        const height = Number(dimensions[2]);
+        if (!Number.isSafeInteger(width) || !Number.isSafeInteger(height) || width <= 0 || height <= 0) return;
 
         variants.push({
           resolution: label,
@@ -57,11 +62,13 @@ async function threadsDownloader(postUrl) {
         (a, b) => b.width * b.height - a.width * a.height
       );
 
-      photos.push({
-        index: photos.length + 1,
-        thumbnail,
-        variants,
-      });
+      if (variants.length) {
+        photos.push({
+          index: photos.length + 1,
+          thumbnail,
+          variants,
+        });
+      }
     }
 
     /* ───────────── VIDEO ───────────── */
@@ -74,7 +81,7 @@ async function threadsDownloader(postUrl) {
         .find('a[title="Download Video"]')
         .attr("href");
 
-      if (!videoUrl) return;
+      if (!videoUrl || videoUrl.startsWith("#")) return;
 
       videos.push({
         index: videos.length + 1,
@@ -84,6 +91,10 @@ async function threadsDownloader(postUrl) {
       });
     }
   });
+
+  if (!photos.length && !videos.length) {
+    throw new Error("No media found");
+  }
 
   return {
     platform: "threads",

@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
 const qs = require("qs");
 
@@ -23,6 +23,9 @@ async function fetchTikTokData(videoUrl) {
     });
 
     const html = res.data;
+    if (typeof html !== "string") {
+      throw new Error("Invalid response from SSSTik");
+    }
     const $ = cheerio.load(html);
 
     const title =
@@ -30,9 +33,11 @@ async function fetchTikTokData(videoUrl) {
       $("#avatarAndTextUsual h2").text().trim() ||
       null;
 
+    const background = $("#mainpicture").css("background-image") || "";
+    const backgroundUrl = background.match(/^url\(\s*(['"]?)(.*?)\1\s*\)$/i);
     const thumbnail =
       $(".result_author").attr("src") ||
-      $("#mainpicture").css("background-image") ||
+      (backgroundUrl && backgroundUrl[2]) ||
       null;
 
     const downloads = [];
@@ -42,7 +47,7 @@ async function fetchTikTokData(videoUrl) {
       const text = $(el).text().replace(/\s+/g, " ").trim();
       const url = $(el).attr("href");
 
-      if (!url || url === "#") return;
+      if (!url || url.startsWith("#")) return;
 
       downloads.push({ text, url });
     });
@@ -51,10 +56,14 @@ async function fetchTikTokData(videoUrl) {
     $("a.download_link.slide").each((_, el) => {
       const url = $(el).attr("href");
 
-      if (!url || url === "#") return;
+      if (!url || url.startsWith("#")) return;
 
       downloads.push({ url });
     });
+
+    if (!downloads.length) {
+      throw new Error("No media found");
+    }
 
     return {
       status: true,
@@ -63,7 +72,7 @@ async function fetchTikTokData(videoUrl) {
       downloads,
     };
   } catch (error) {
-    throw new Error(`SSSTik request failed: ${error.message}`);
+    throw new Error(`SSSTik request failed: ${error.message}`, { cause: error });
   }
 }
 

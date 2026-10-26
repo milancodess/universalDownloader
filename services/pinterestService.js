@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
 
 async function fetchPinterestMedia(url) {
@@ -23,6 +23,10 @@ async function fetchPinterestMedia(url) {
       },
     });
 
+    if (typeof response.data !== "string") {
+      throw new Error("Invalid response from SavePin");
+    }
+
     const $ = cheerio.load(response.data);
     const title = $("h1").first().text().trim();
     const thumbnail = $(".image-container img").attr("src");
@@ -32,7 +36,20 @@ async function fetchPinterestMedia(url) {
       const quality = $(el).find(".video-quality").text().trim();
       const format = $(el).find("td:nth-child(2)").text().trim();
       const href = $(el).find("a").attr("href");
-      const directUrl = decodeURIComponent(href?.split("url=")[1] || "");
+      if (!href || href.startsWith("#")) return;
+
+      let directUrl;
+      try {
+        const link = new URL(href, fullUrl);
+        // Decode the nested URL once, without appending the wrapper's other parameters.
+        const target = link.searchParams.has("url") ? link.searchParams.get("url") : link.href;
+        const parsed = new URL(target);
+        if (!["http:", "https:"].includes(parsed.protocol)) return;
+        directUrl = parsed.href;
+      } catch {
+        // One malformed row should not hide the remaining download options.
+        return;
+      }
 
       if (quality && format && directUrl) {
         results.push({
@@ -43,13 +60,17 @@ async function fetchPinterestMedia(url) {
       }
     });
 
+    if (!results.length) {
+      throw new Error("No media found");
+    }
+
     return {
       title,
       thumbnail,
       downloads: results,
     };
   } catch (error) {
-    throw new Error("Failed to scrape Pinterest media: " + error.message);
+    throw new Error("Failed to scrape Pinterest media: " + error.message, { cause: error });
   }
 }
 

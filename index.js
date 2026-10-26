@@ -4,6 +4,7 @@ const morgan = require("morgan");
 
 const app = express();
 
+app.disable("x-powered-by");
 app.use(cors());
 app.use(express.json());
 app.set("json spaces", 2);
@@ -67,6 +68,24 @@ app.use((req, res) => {
 });
 
 app.use((err, req, res, next) => {
+  if (res.headersSent) return next(err);
+
+  const bodyErrors = {
+    "entity.parse.failed": [400, "Invalid JSON body"],
+    "entity.too.large": [413, "Request body too large"],
+    "charset.unsupported": [415, "Unsupported request charset"],
+    "encoding.unsupported": [415, "Unsupported content encoding"],
+    "request.aborted": [400, "Request aborted"],
+    "request.size.invalid": [400, "Invalid request body size"],
+  };
+  if (Object.hasOwn(bodyErrors, err.type)) {
+    const [status, error] = bodyErrors[err.type];
+    return res.status(status).json({
+      success: false,
+      error,
+    });
+  }
+
   console.error("❌ Error:", err.message);
   res.status(500).json({
     success: false,
@@ -74,7 +93,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

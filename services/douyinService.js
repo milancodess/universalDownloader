@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
 
 async function fetchDouyinVideoInfo(douyinUrl) {
@@ -22,7 +22,7 @@ async function fetchDouyinVideoInfo(douyinUrl) {
       },
     );
 
-    if (data.status !== "ok" || !data.data) {
+    if (!data || data.status !== "ok" || typeof data.data !== "string") {
       throw new Error("Tikvideo returned invalid response");
     }
 
@@ -41,12 +41,16 @@ async function fetchDouyinVideoInfo(douyinUrl) {
       const label = $(el).text().trim();
       const url = $(el).attr("href");
 
-      if (url && !label.toLowerCase().includes("profile")) {
+      if (url && !url.startsWith("#") && !label.toLowerCase().includes("profile")) {
         links.push({ label, url });
       }
     });
 
     const preview = $("#vid").attr("data-src") || null;
+
+    if (!links.length && !preview) {
+      throw new Error("No media found");
+    }
 
     return {
       title,

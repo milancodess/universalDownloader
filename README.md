@@ -52,10 +52,12 @@ Download media from LinkedIn,Threads, Reddit, Facebook, Instagram, TikTok, YouTu
 
 ## Installation
 
+Requires Node.js 22 or newer. CI runs on Node.js 22 and 24 on Linux and Windows.
+
 ```bash
 git clone https://github.com/milancodess/universalDownloader.git
 cd universalDownloader
-npm install
+npm ci
 ```
 
 ---
@@ -71,15 +73,16 @@ npm start
 2. Access API at:
    [http://localhost:3000/](http://localhost:3000/)
 
-3. Example API request to download Instagram media:
+3. Example API request to download Instagram media (encode the complete media URL
+   as a query value, especially when it contains `&` or `#`):
 
 ```
-GET http://localhost:3000/api/meta/download?url=https://www.instagram.com/p/DLHQfPiyucu/
+GET http://localhost:3000/api/meta/download?url=https%3A%2F%2Fwww.instagram.com%2Fp%2FDLHQfPiyucu%2F
 ```
 
 Response:
 
-```json
+```jsonc
 {
   "success": true,
   "data": {
@@ -87,6 +90,28 @@ Response:
   }
 }
 ```
+
+The server listens on port 3000 by default; set `PORT` to override it. Requiring
+`index.js` exports the Express app without starting a listener, including when
+used by the configured Vercel handler.
+
+Every download endpoint expects one HTTP or HTTPS `url` string, up to 8192
+characters, without embedded credentials. Successful responses retain each
+platform's existing `data` structure. Failed responses use
+`{ "success": false, "error": "..." }` with these HTTP statuses:
+
+| Status | Meaning |
+| ------ | ------- |
+| 400 | Missing or invalid URL, or malformed JSON body |
+| 404 | Unknown endpoint |
+| 413 | JSON request body exceeds 100 KiB |
+| 415 | Unsupported request charset or content encoding |
+| 502 | The provider failed, returned an explicit failure, or yielded no usable media in a parsed response |
+| 504 | An upstream request timed out |
+| 500 | Unexpected application error |
+
+Provider errors previously returned 500 or, in some cases, 200 with a nested
+failure. Clients should handle the 502 and 504 statuses above.
 
 ---
 
@@ -124,7 +149,10 @@ Response:
 ├── controllers/       # API route handlers
 ├── routes/            # Express route definitions
 ├── services/          # Business logic & downloader functions
-├── server.js          # Express app entry point
+├── lib/               # Shared validation, controllers, and HTTP client
+├── test/              # Offline regression and local HTTP integration tests
+├── index.js           # Express app export and CLI entry point
+├── package-lock.json  # Reproducible dependency versions
 └── package.json
 ```
 
@@ -132,8 +160,38 @@ Response:
 
 ## Contributing
 
+Run the regression suite before submitting changes:
+
+```bash
+npm ci
+npm test
+npm run test:coverage
+```
+
+Tests use mocked provider responses and local HTTP servers. They cover all 18
+routes/controllers, parser fixtures, error propagation, request deadlines,
+redirect loops, and request/response size limits. They do not verify that live
+third-party download providers are currently available.
+
 Feel free to open issues or submit pull requests!
 If you want to add support for other platforms or improve error handling, you're welcome!
+
+---
+
+## Provider limitations
+
+The service relies on third-party download sites, whose HTML, APIs, and tokens
+can change independently. In particular, the SoundCloud adapter contains a
+static token and a hash tied to one track; TikTok and YouTube also contain static
+provider parameters. These integrations need live verification and a supported
+token-refresh mechanism before relying on them in production.
+
+The shared HTTP client limits each request to 15 seconds, five redirects, a
+5 MiB decoded response, and a 1 MiB request body. Multi-step integrations such as
+Terabox apply the timeout to each request. The Meta integration is an exception:
+`metadownloader` manages its own HTTP requests and exposes no timeout or
+cancellation configuration. Its explicit failure results are handled by the
+API, but its network requests are not covered by the shared client limits.
 
 ---
 

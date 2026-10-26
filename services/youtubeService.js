@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 
 async function fetchYouTubeData(url) {
   if (!url || typeof url !== "string") {
@@ -50,29 +50,49 @@ async function fetchYouTubeData(url) {
     const videos = [];
     const audios = [];
 
-    (video.resources || []).forEach((r) => {
+    if (!Array.isArray(video.resources)) {
+      throw new Error("Invalid media resources from vidssave");
+    }
+
+    video.resources.forEach((r) => {
+      if (!r || !["video", "audio"].includes(r.type)) return;
+      if (typeof r.download_url !== "string") return;
+
+      try {
+        const downloadUrl = new URL(r.download_url);
+        if (!["http:", "https:"].includes(downloadUrl.protocol)) return;
+      } catch {
+        return;
+      }
+
+      const size = r.size == null || r.size === "" ? NaN : Number(r.size);
       const item = {
         format: r.format,
         quality: r.quality || null,
         url: r.download_url,
-        sizeMB: +(r.size / 1024 / 1024).toFixed(2),
+        sizeMB: Number.isFinite(size) && size >= 0
+          ? +(size / 1024 / 1024).toFixed(2)
+          : null,
       };
 
       if (r.type === "video") videos.push(item);
       if (r.type === "audio") audios.push(item);
     });
 
+    if (!videos.length && !audios.length) {
+      throw new Error("No media found in vidssave response");
+    }
+
     return {
       type: "video",
       url,
       thumbnail: video.thumbnail || null,
       title: video.title || null,
-      duration: video.duration || null,
+      duration: video.duration ?? null,
       videos,
       audios,
     };
   } catch (err) {
-    console.error("Vidssave scrape failed:", err.message);
     throw err;
   }
 }

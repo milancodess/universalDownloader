@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 
 async function scrapeKuaishou(videoUrl) {
   if (!videoUrl) throw new Error("Missing video URL");
@@ -28,9 +28,7 @@ async function scrapeKuaishou(videoUrl) {
 
     return response.data;
   } catch (error) {
-    throw new Error(
-      `Error scraping Kuaishou video: ${error.response?.data || error.message}`
-    );
+    throw new Error("Error scraping Kuaishou video", { cause: error });
   }
 }
 

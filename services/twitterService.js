@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
 
 /**
@@ -28,7 +28,7 @@ async function twitterDownloader(tweetUrl) {
     timeout: 15000,
   });
 
-  if (data.status !== "ok") {
+  if (!data || data.status !== "ok" || typeof data.data !== "string") {
     throw new Error("Failed to fetch Twitter media");
   }
 
@@ -81,6 +81,10 @@ async function twitterDownloader(tweetUrl) {
     const qb = parseInt(b.quality) || 0;
     return qb - qa;
   });
+
+  if (!videos.length && !images.length) {
+    throw new Error("No media found");
+  }
 
   return {
     type: videos.length ? "video" : "photo",

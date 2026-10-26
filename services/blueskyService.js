@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
 
 async function fetchBlueskyMedia(postUrl) {
@@ -12,6 +12,10 @@ async function fetchBlueskyMedia(postUrl) {
       referer: "https://bskysaver.com/",
     },
   });
+
+  if (typeof html !== "string") {
+    throw new Error("Invalid response from Bluesky saver");
+  }
 
   const $ = cheerio.load(html);
   const section = $("section.download_result_section");
@@ -57,26 +61,26 @@ async function fetchBlueskyMedia(postUrl) {
         .find("a.download__item__info__actions__button")
         .attr("href");
 
-      if (!url) return;
-
-      photos.push({
-        index: photos.length + 1,
-        thumbnail: img.attr("src"),
-        variants: [
-          {
-            resolution: "best",
-            url,
-          },
-        ],
-      });
+      if (url && !url.startsWith("#")) {
+        photos.push({
+          index: photos.length + 1,
+          thumbnail: img.attr("src"),
+          variants: [
+            {
+              resolution: "best",
+              url,
+            },
+          ],
+        });
+      }
     }
 
     /* VIDEO */
     if (item.find(".video_wrapper video").length) {
       const video = item.find(".video_wrapper video").first();
 
-      const url = video.attr("src");
-      if (!url) return;
+      const url = video.attr("src") || video.find("source").first().attr("src");
+      if (!url || url.startsWith("#")) return;
 
       videos.push({
         index: videos.length + 1,

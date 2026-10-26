@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 
 async function fetchLinkedinData(url) {
   try {
@@ -28,7 +28,7 @@ async function fetchLinkedinData(url) {
 
     return response.data;
   } catch (error) {
-    throw new Error(`LinkedIn API request failed: ${error.message}`);
+    throw new Error("LinkedIn API request failed", { cause: error });
   }
 }
 
