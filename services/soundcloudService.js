@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 
 async function fetchSoundcloudData(url) {
   try {
@@ -31,7 +31,7 @@ async function fetchSoundcloudData(url) {
 
     return response.data;
   } catch (error) {
-    throw new Error(`SoundCloud API request failed: ${error.message}`);
+    throw new Error("SoundCloud API request failed", { cause: error });
   }
 }
 

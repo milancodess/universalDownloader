@@ -1,0 +1,36 @@
+{
+  "nasa-example.jpg": {
+    "title": "N159 — Stars brewing in a nebulous cauldron",
+    "source": "https://www.instagram.com/p/DfCo97ZlL5F/",
+    "original": "https://esawebb.org/images/potm2610a/",
+    "credit": "ESA/Webb, NASA & CSA, E. Sabbi, M. Zamani (ESA/Webb)",
+    "acknowledgement": "M. H. Özsaraç",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://esawebb.org/copyright/",
+    "note": "Unmodified copy of the publicly downloaded Instagram photo, used as a clearly labeled example."
+  },
+  "big-buck-bunny.jpg": {
+    "title": "Big Buck Bunny",
+    "source": "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
+    "thumbnail": "https://i.ytimg.com/vi/aqz-KE-bpKQ/maxresdefault.jpg",
+    "credit": "Blender Foundation",
+    "license": "Creative Commons Attribution",
+    "note": "Official Blender video thumbnail. The source video's metadata declares Creative Commons Attribution (reuse allowed). Used as a clearly labeled example."
+  },
+  "fonts": {
+    "Sora": {
+      "source": "https://github.com/google/fonts/tree/main/ofl/sora",
+      "credit": "The Sora Project Authors",
+      "license": "SIL Open Font License 1.1",
+      "localLicense": "../fonts/Sora-OFL.txt",
+      "weightRange": "100 800"
+    },
+    "Manrope": {
+      "source": "https://github.com/google/fonts/tree/main/ofl/manrope",
+      "credit": "The Manrope Project Authors",
+      "license": "SIL Open Font License 1.1",
+      "localLicense": "../fonts/Manrope-OFL.txt",
+      "weightRange": "200 800"
+    }
+  }
+}

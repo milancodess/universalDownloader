@@ -1,4 +1,4 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
 const qs = require("qs");
 
@@ -17,7 +17,7 @@ async function fetchNonce() {
     throw new Error("Nonce script not found");
   }
 
-  const nonceMatch = scriptContent.match(/"nonce":"(.*?)"/);
+  const nonceMatch = scriptContent.match(/"nonce"\s*:\s*"([^"\\]+)"/);
   if (!nonceMatch) {
     throw new Error("Nonce not found");
   }
@@ -52,7 +52,7 @@ async function fetchTerabox(teraboxUrl) {
 
     return res.data;
   } catch (err) {
-    throw new Error(err.message);
+    throw new Error("Terabox request failed", { cause: err });
   }
 }
 

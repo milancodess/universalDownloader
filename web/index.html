@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f7f5f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#17141b" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="A personal media studio. Find, preview, and save video, audio, and photos from your favorite public links.">
+  <title>Universal — Keep what moves you</title>
+  <script src="./theme.js"></script>
+  <link rel="preload" href="./fonts/Sora.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="./fonts/Manrope.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./media.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" width="0" height="0" style="position:absolute;overflow:hidden">
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 14 4-4m-7 5-1 1a4.25 4.25 0 0 1-6-6l4-4a4.25 4.25 0 0 1 6 0m4 3 1-1a4.25 4.25 0 0 1 6 6l-4 4a4.25 4.25 0 0 1-6 0" transform="translate(1 1)"/></symbol>
+    <symbol id="i-paste" viewBox="0 0 24 24"><path d="M9 5H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3M9 3h6v5H9zM8 12h8m-8 4h6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="i-video" viewBox="0 0 24 24"><rect x="3" y="5" width="14" height="14" rx="3"/><path d="m17 10 5-3v10l-5-3"/></symbol>
+    <symbol id="i-audio" viewBox="0 0 24 24"><path d="M9 17V5l11-2v12M9 8l11-2"/><ellipse cx="6" cy="18" rx="3" ry="3"/><ellipse cx="17" cy="16" rx="3" ry="3"/></symbol>
+    <symbol id="i-photo" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-7 5 7"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.3 6.3A8 8 0 0 1 20 12M4 12a8 8 0 0 0 13.7 5.7"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 3h7v7M21 3 10 14M10 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8z"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+    <symbol id="i-theme-system" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="13" rx="2.5"/><path d="M8 21h8m-4-4v4"/></symbol>
+    <symbol id="i-theme-light" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42m0-14.14-1.42 1.42m-11.3 11.3-1.42 1.42"/></symbol>
+    <symbol id="i-theme-dark" viewBox="0 0 24 24"><path d="M20.7 14.4A9 9 0 0 1 9.6 3.3a9 9 0 1 0 11.1 11.1Z"/></symbol>
+  </svg>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Universal home">
+        <svg class="brand-mark" viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M8 9v13c0 8 5 12 12 12s12-4 12-12V9M15 9v13c0 4 2 6 5 6s5-2 5-6V9" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+        <span>universal.</span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-active" href="#download-form">Studio</a>
+        <a href="#session-section">This session <span id="nav-count">0</span></a>
+      </nav>
+      <div class="theme-control">
+        <button id="theme-toggle" class="theme-toggle" type="button" data-mode="system" aria-label="Theme: System. Switch to Light." disabled>
+          <svg class="icon theme-glyph" data-theme-icon="system" aria-hidden="true"><use href="#i-theme-system"/></svg>
+          <svg class="icon theme-glyph" data-theme-icon="light" aria-hidden="true"><use href="#i-theme-light"/></svg>
+          <svg class="icon theme-glyph" data-theme-icon="dark" aria-hidden="true"><use href="#i-theme-dark"/></svg>
+        </button>
+        <span class="theme-hint" aria-hidden="true"><strong id="theme-current">System</strong><span id="theme-next">Next: Light</span></span>
+        <span id="theme-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
+      </div>
+      <button id="sources-button" class="quiet-button sources-trigger" type="button" aria-label="Browse sources"><svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg><span>Sources</span></button>
+    </header>
+
+    <main>
+      <section id="welcome" class="welcome" aria-labelledby="title">
+        <div class="welcome-copy">
+          <p class="studio-note"><span></span>Your personal media studio</p>
+          <h1 id="title">Keep what<br>moves you.</h1>
+          <p class="welcome-description">The video. The sound. That one perfect frame.<br> Bring it a little closer.</p>
+        </div>
+        <div class="sample-stage" aria-label="Try real media examples">
+          <div class="stage-orbit" aria-hidden="true"></div>
+          <button class="sample-card sample-photo" type="button" data-example="photo" aria-label="Try a NASA space photo from Instagram">
+            <img src="./assets/nasa-example.jpg" alt="Orange and blue clouds of the N159 nebula, filled with stars" width="1365" height="1365">
+            <span class="sample-top"><span><svg class="icon" aria-hidden="true"><use href="#i-photo"/></svg>Photo</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></span>
+            <span class="sample-caption"><span>NASA, on Instagram</span><strong>A little perspective.</strong></span>
+          </button>
+          <button class="sample-card sample-video" type="button" data-example="video" aria-label="Try the Big Buck Bunny video from YouTube">
+            <img src="./assets/big-buck-bunny.jpg" alt="Big Buck Bunny in a sunny forest" width="1278" height="720">
+            <span class="sample-play"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></span>
+            <span class="sample-video-caption"><strong>Big Buck Bunny</strong><span>Blender Foundation</span></span>
+          </button>
+          <button class="sample-sound" type="button" data-example="audio" aria-label="Try an audio download from Big Buck Bunny">
+            <span class="sound-icon"><svg class="icon" aria-hidden="true"><use href="#i-audio"/></svg></span>
+            <span>Just the audio</span>
+            <span class="mini-wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+          </button>
+          <p class="sample-note">Real media. Give one a try. <span aria-hidden="true">↗</span></p>
+        </div>
+      </section>
+
+      <section class="composer-section" aria-labelledby="composer-title">
+        <div class="composer-heading"><h2 id="composer-title">A good find starts with a link.</h2><span class="keyboard-hint"><kbd>Ctrl</kbd><kbd>K</kbd> to focus</span></div>
+        <form id="download-form" novalidate>
+          <div class="composer-input-row">
+            <svg class="icon input-icon" aria-hidden="true"><use href="#i-link"/></svg>
+            <label class="sr-only" for="media-url">Media URL</label>
+            <input id="media-url" name="url" type="url" inputmode="url" placeholder="Paste a link to something you love" required maxlength="8192" autocomplete="off" spellcheck="false" aria-describedby="status">
+            <button id="paste-button" class="icon-button" type="button" aria-label="Paste link from clipboard" title="Paste link"><svg class="icon" aria-hidden="true"><use href="#i-paste"/></svg></button>
+            <button id="clear-button" class="icon-button" type="button" aria-label="Clear link" title="Clear link" hidden><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button>
+            <button id="submit-button" class="primary-button" type="submit"><span>Find my media</span><svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button>
+          </div>
+          <div class="composer-options">
+            <div class="source-status"><span id="source-dot" class="source-dot"></span><label class="sr-only" for="platform">Platform</label><select id="platform" name="platform" aria-label="Platform">
+              <option value="auto">Auto-detect source</option>
+              <option value="bluesky">Bluesky</option><option value="capcut">CapCut</option><option value="dailymotion">Dailymotion</option><option value="douyin">Douyin</option><option value="meta">Facebook / Instagram</option><option value="kuaishou">Kuaishou</option><option value="linkedin">LinkedIn</option><option value="pinterest">Pinterest</option><option value="reddit">Reddit</option><option value="snapchat">Snapchat</option><option value="soundcloud">SoundCloud</option><option value="spotify">Spotify</option><option value="terabox">Terabox</option><option value="threads">Threads</option><option value="tiktok">TikTok</option><option value="tumblr">Tumblr</option><option value="twitter">Twitter / X</option><option value="youtube">YouTube</option>
+            </select><span id="detected-source" hidden></span></div>
+            <span class="composer-help">Video, audio &amp; photos. One place.</span>
+          </div>
+        </form>
+        <div class="request-status"><p id="status" role="status" aria-live="polite" aria-atomic="true">Ready when you are.</p><span id="elapsed" hidden></span><button id="cancel-button" class="text-button" type="button" hidden>Cancel</button></div>
+        <div id="search-error" class="recovery-panel" inert aria-hidden="true">
+          <div class="recovery-clip">
+            <section class="recovery-card" aria-labelledby="search-error-title">
+              <span class="recovery-symbol" aria-hidden="true">!</span>
+              <div class="recovery-copy">
+                <h3 id="search-error-title">We couldn’t find this media.</h3>
+                <p id="search-error-message"></p>
+                <p id="search-error-context" class="recovery-context" hidden>Your previous result is still available below.</p>
+                <div class="recovery-actions">
+                  <button id="retry-button" class="quiet-button recovery-retry" type="button"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>Try again</button>
+                  <button id="edit-link" class="text-button" type="button">Edit link</button>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+        <noscript><p>Enable JavaScript to use the studio, or <a href="/">open the API</a>.</p></noscript>
+      </section>
+
+      <section id="output" class="output" data-state="empty" aria-labelledby="output-state-title" hidden>
+        <div id="output-empty" class="output-empty">
+          <div class="loading-art" aria-hidden="true"><span></span><span></span><span></span></div>
+          <h2 id="output-state-title">Finding your media</h2>
+          <p id="output-state-copy">Your next good find is on its way.</p>
+          <div class="finding-track" aria-hidden="true"><span></span></div>
+        </div>
+        <div id="results" class="results" hidden>
+          <div class="result-topline"><h2 id="results-title" tabindex="-1">Take a closer look.</h2><span id="result-count"></span></div>
+          <div class="media-workspace">
+            <div class="preview-column">
+              <div id="preview-stage" class="preview-stage">
+                <img id="media-poster" alt="Media preview" referrerpolicy="no-referrer" hidden>
+                <div id="preview-fallback" class="preview-fallback"><svg class="icon" aria-hidden="true"><use href="#i-video"/></svg><span>Your media, ready to keep.</span></div>
+                <div id="audio-art" class="audio-art" hidden><div class="record-disc" aria-hidden="true"></div><span class="audio-art-label">A little more listening.</span></div>
+                <span id="preview-badge" class="preview-badge"></span>
+                <button id="preview-button" class="preview-button" type="button" hidden><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg><span>Play preview</span></button>
+                <div id="player-container" hidden></div>
+              </div>
+              <div class="media-caption"><div><span id="media-source" class="media-source"></span><h3 id="media-title"></h3></div><a id="source-link" class="icon-button" target="_blank" rel="noopener noreferrer" aria-label="Open original source"><svg class="icon" aria-hidden="true"><use href="#i-external"/></svg></a></div>
+            </div>
+            <div class="format-panel">
+              <div><h3>Make it yours.</h3><p class="format-subtitle">Choose the file that fits.</p></div>
+              <div id="kind-tabs" class="kind-tabs" role="group" aria-label="Media type"></div>
+              <div id="format-stage" class="format-stage"><div id="format-content" class="format-content">
+              <div id="download-links" class="download-links" role="radiogroup" aria-label="Available files"></div>
+              <div class="save-section">
+                <p id="selected-summary" class="selected-summary"></p>
+                <a id="save-button" class="primary-button save-button"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg><span>Download file</span></a>
+                <div id="preparation-feedback" class="preparation-feedback" hidden>
+                  <div class="preparation-heading">
+                    <span class="preparation-badge" aria-hidden="true">
+                      <svg class="preparation-orbit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>
+                      <svg class="preparation-check" viewBox="0 0 24 24"><path d="m6 12 4 4 8-8" pathLength="1"/></svg>
+                      <svg class="preparation-notice" viewBox="0 0 24 24"><path d="M12 6v7m0 4v.1"/></svg>
+                    </span>
+                    <strong id="preparation-title"></strong><span id="preparation-metric" aria-hidden="true"></span>
+                  </div>
+                  <p id="preparation-status" role="status" aria-live="polite" aria-atomic="true"></p>
+                  <div id="preparation-meter" class="preparation-meter" aria-hidden="true"><span id="preparation-fill"></span></div>
+                  <progress id="preparation-progress" class="sr-only" max="100" aria-label="Video and audio preparation progress" hidden></progress>
+                  <p id="preparation-detail"></p>
+                  <div id="preparation-recovery" class="recovery-panel" inert aria-hidden="true">
+                    <div class="recovery-clip"><div class="recovery-actions">
+                      <button id="retry-preparation" class="quiet-button recovery-retry" type="button"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span>Retry preparation</span></button>
+                    </div></div>
+                  </div>
+                  <button id="cancel-preparation" class="text-button" type="button" hidden>Cancel preparation</button>
+                </div>
+                <p id="result-hint" class="result-hint"></p>
+                <button id="refresh-button" class="text-button" type="button"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>Refresh links</button>
+              </div>
+              </div></div>
+            </div>
+          </div>
+          <details class="response-details"><summary>Technical details</summary><pre id="raw-response"></pre></details>
+        </div>
+      </section>
+
+      <section id="session-section" class="session-section" aria-labelledby="session-title">
+        <div class="section-heading"><div><h2 id="session-title">This session</h2><p>A little trail of good finds.</p></div><button id="clear-session" class="text-button" type="button" hidden>Clear session</button></div>
+        <div id="recent-sources" class="recent-sources"></div>
+        <div id="session-empty" class="session-empty"><span class="empty-stack" aria-hidden="true"><svg class="icon"><use href="#i-photo"/></svg></span><div><strong>Your finds will feel at home here.</strong><p>Recent sources stay in this tab only.</p></div><span class="session-arrow" aria-hidden="true">↗</span></div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>Less scrolling. More keeping.</span><div><span class="local-indicator"><i></i>Running locally</span><a href="/" target="_blank" rel="noopener noreferrer">API</a><button id="credits-button" class="text-button" type="button">Credits</button></div><p>Save media you own or have permission to keep.</p></footer>
+  </div>
+
+  <dialog id="sources-dialog" aria-labelledby="sources-title"><div class="dialog-heading"><div><h2 id="sources-title">Find it anywhere.</h2><p>Choose a source, then bring a public link.</p></div><button id="close-sources" class="icon-button" type="button" aria-label="Close sources"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div><div id="source-catalog" class="source-catalog"></div><p class="dialog-note">Availability varies by source. Private, removed, or restricted media may not be available. Download content you own or have permission to save.</p></dialog>
+  <dialog id="credits-dialog" aria-labelledby="credits-title"><div class="dialog-heading"><h2 id="credits-title">Made with good company.</h2><button id="close-credits" class="icon-button" type="button" aria-label="Close credits"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></div><div class="credits-content"><h3>Real media, real makers</h3><p>The examples are public source media, ready to try in the studio.</p><p><strong>N159 nebula</strong><br>ESA/Webb, NASA &amp; CSA, E. Sabbi, M. Zamani (ESA/Webb)<br>Acknowledgement: M. H. Özsaraç<br><a href="https://esawebb.org/images/potm2610a/" target="_blank" rel="noopener noreferrer">Original image</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></p><p><strong>Big Buck Bunny</strong><br>Blender Foundation<br><a href="https://www.youtube.com/watch?v=aqz-KE-bpKQ" target="_blank" rel="noopener noreferrer">Original film</a> · Creative Commons Attribution</p><h3>Typography</h3><p>Sora by the Sora Project Authors and Manrope by the Manrope Project Authors. Self-hosted under the SIL Open Font License.</p></div></dialog>
+  <div id="toast" class="toast" aria-hidden="true"></div>
+  <div id="toast-announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
+</body>
+</html>

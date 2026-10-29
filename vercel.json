@@ -1,5 +1,18 @@
 {
   "version": 2,
-  "builds": [{ "src": "index.js", "use": "@vercel/node" }],
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "web/**",
+          "services/facebookInstaWorker.js",
+          "services/configureMetaHttp.js",
+          "node_modules/metadownloader/**"
+        ]
+      }
+    }
+  ],
   "routes": [{ "src": "/(.*)", "dest": "index.js" }]
 }

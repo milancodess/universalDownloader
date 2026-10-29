@@ -1,5 +1,6 @@
-const axios = require("axios");
+const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
+const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
 
 async function redditDownloader(url) {
   try {
@@ -13,17 +14,20 @@ async function redditDownloader(url) {
       },
     });
 
+    if (typeof res.data !== "string") {
+      throw new Error("Invalid response from RapidSave");
+    }
+
     const $ = cheerio.load(res.data);
 
-    const downloadUrl = $("a.downloadbutton").attr("href");
-
+    const downloadUrl = resolveMediaUrl($("a.downloadbutton").attr("href"), rapidUrl);
     if (!downloadUrl) {
       throw new Error("Download link not found");
     }
 
     return downloadUrl;
   } catch (err) {
-    throw new Error(err.message);
+    throw new Error(err.message, { cause: err });
   }
 }
 
