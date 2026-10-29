@@ -22,12 +22,82 @@ async function server(t, options) {
 }
 
 test("media tickets allow only supported HTTPS CDN URLs", () => {
-  for (const url of [MEDIA_URL, "https://scontent.cdninstagram.com/photo.jpg", "https://video.xx.fbcdn.net/file.mp4"]) {
+  for (const url of [MEDIA_URL, "https://scontent.cdninstagram.com/photo.jpg", "https://video.xx.fbcdn.net/file.mp4", "https://cf-media.sndcdn.com/track.mp3", "https://playback.media-streaming.soundcloud.cloud/track.m3u8", "https://v19-webapp-prime.us.tiktok.com/video.mp4", "https://v16m.tiktokcdn-us.com/audio.mp3"]) {
     assert.equal(validateMediaUrl(url), url);
   }
   for (const url of ["http://r1.googlevideo.com/video", "https:////r1.googlevideo.com/video", "https://r1.googlevideo.com:8443/video", "https://r1.googlevideo.com.evil.test/video", "https://googlevideo.com@evil.test/", "https://user:password@r1.googlevideo.com/", "https://127.0.0.1/", "https://r1.googlevideo.com/\nvideo", "https://r1.googlevideo.com\\@evil.test"]) {
     assert.throws(() => validateMediaUrl(url), undefined, url);
   }
+  for (const url of ["https://www.tiktok.com/video", "https://evil.tiktok.com/video", "https://sndcdn.com.evil.test/audio", "https://v19-webapp-prime.us.tiktok.com.evil.test/video", "https://evil.soundcloud.cloud/audio"]) assert.throws(() => validateMediaUrl(url));
+});
+
+test("TikTok tickets keep only scoped anonymous extractor cookies and strip serialized quotes", () => {
+  const store = createTicketStore();
+  const cookies = 'ttwid=publicid; Domain=.tiktok.com; Path=/; Secure; tt_chain_token="chain"; Domain=.tiktok.com; Path=/; Secure; sessionid=private; Domain=.tiktok.com; Path=/; Secure';
+  const get = (options) => store.get(store.createLink(options).split("/").at(-1));
+  assert.equal(get({ url: "https://v19-webapp-prime.us.tiktok.com/video", cookies }).cookies, "ttwid=publicid; tt_chain_token=chain");
+  assert.equal(get({ url: MEDIA_URL, cookies }).cookies, null);
+  for (const invalid of [cookies.replaceAll(".tiktok.com", ".evil.test"), cookies.replaceAll("Path=/", "Path=/private"), cookies.replaceAll("; Secure", ""), "ttwid=bad\r\nInjected: secret; Domain=.tiktok.com; Path=/; Secure"]) {
+    assert.equal(get({ url: "https://v19-webapp-prime.us.tiktok.com/video", cookies: invalid }).cookies, null);
+  }
+});
+
+test("TikTok transfer cookies never leave the original host or return after a cross-host redirect", async (t) => {
+  const store = createTicketStore();
+  const source = "https://v19-webapp-prime.us.tiktok.com/video";
+  const path = store.createLink({ url: source, cookies: 'ttwid=anonymous; Domain=.tiktok.com; Path=/; Secure' });
+  let calls = 0;
+  const base = await server(t, { store, client: { get: async (url, options) => {
+    calls++;
+    assert.equal(options.headers.cookie, calls === 1 ? "ttwid=anonymous" : undefined);
+    if (calls === 1) return response(Buffer.alloc(0), { location: "https://v16-webapp-prime.us.tiktok.com/video" }, 302);
+    if (calls === 2) return response(Buffer.alloc(0), { location: source }, 302);
+    return response();
+  } } });
+  const result = await fetch(base + path, { headers: { Cookie: "sessionid=never-forward" } });
+  assert.equal(result.status, 200);
+  assert.deepEqual(Buffer.from(await result.arrayBuffer()), MP4);
+  assert.equal(calls, 3);
+});
+
+test("SoundCloud HLS attachments contain complete media bytes rather than a playlist", async (t) => {
+  const source = "https://playback.media-streaming.soundcloud.cloud/audio/playlist.m3u8";
+  const store = createTicketStore();
+  const path = store.createLink({ url: source, kind: "hls", filename: "example.m4a" });
+  const init = Buffer.concat([MP4, Buffer.from("moov")]);
+  const part = Buffer.concat([Buffer.from([0, 0, 0, 16]), Buffer.from("moof"), Buffer.alloc(32)]);
+  const manifest = '#EXTM3U\n#EXT-X-MAP:URI="init.mp4"\n#EXTINF:1,\nsegment.m4s\n#EXT-X-ENDLIST\n';
+  const requests = [];
+  const base = await server(t, { store, client: { get: async (url) => {
+    requests.push(url);
+    return url.endsWith(".m3u8") ? response(Buffer.from(manifest), { "content-type": "application/vnd.apple.mpegurl" })
+      : response(url.endsWith("init.mp4") ? init : part);
+  } } });
+  const result = await fetch(base + path);
+  assert.equal(result.status, 200);
+  assert.match(result.headers.get("content-type"), /audio\/mp4/);
+  assert.match(result.headers.get("content-disposition"), /example.m4a/);
+  assert.equal(result.headers.get("content-length"), null);
+  assert.deepEqual(Buffer.from(await result.arrayBuffer()), Buffer.concat([init, part]));
+  assert.equal(requests.length, 3);
+  requests.length = 0;
+  const head = await fetch(base + path, { method: "HEAD" });
+  assert.equal(head.status, 200);
+  assert.equal(requests.length, 2);
+});
+
+test("HLS manifest redirects cannot widen the SoundCloud CDN boundary", async (t) => {
+  const store = createTicketStore();
+  assert.throws(() => store.createLink({ url: MEDIA_URL, kind: "hls" }));
+  const path = store.createLink({ url: "https://playback.media-streaming.soundcloud.cloud/a.m3u8", kind: "hls" });
+  let requests = 0;
+  const base = await server(t, { store, client: { get: async () => {
+    requests++;
+    return response(Buffer.alloc(0), { location: MEDIA_URL }, 302);
+  } } });
+  const result = await fetch(base + path);
+  assert.equal(result.status, 502);
+  assert.equal(requests, 1);
 });
 
 test("tickets are opaque, expire, stay bounded and do not forward cookies or unsafe headers", () => {
@@ -65,6 +135,17 @@ test("file endpoint returns the actual bytes as an attachment, without leaking u
   assert.equal(result.headers.get("x-content-type-options"), "nosniff");
   assert.equal(result.headers.get("location"), null);
   assert.deepEqual(Buffer.from(await result.arrayBuffer()), MP4);
+});
+
+test("MP3 audio is served with its actual type even when the CDN labels it video/mp4", async (t) => {
+  const store = createTicketStore();
+  const path = store.createLink({ url: "https://v16m.tiktokcdn-us.com/audio", filename: "audio.mp3" });
+  const mp3 = Buffer.concat([Buffer.from([0xff, 0xfb, 0x90, 0]), Buffer.alloc(1024)]);
+  const base = await server(t, { store, client: { get: async () => response(mp3) } });
+  const result = await fetch(base + path);
+  assert.equal(result.status, 200);
+  assert.match(result.headers.get("content-type"), /^audio\/mpeg/);
+  assert.deepEqual(Buffer.from(await result.arrayBuffer()), mp3);
 });
 
 test("Unicode titles remain valid attachment filenames when truncated", async (t) => {

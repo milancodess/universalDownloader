@@ -8,6 +8,8 @@ test("platform detection matches known hosts and subdomains without accepting lo
     ["https://m.youtube.com/watch?v=123&list=456", "youtube"],
     ["https://www.instagram.com/p/123", "meta"],
     ["https://vm.tiktok.com/123", "tiktok"],
+    ["https://soundcloud.com/artist/track", "soundcloud"],
+    ["https://on.soundcloud.com/short-link", "soundcloud"],
     ["https://www.threads.com/@user/post/123", "threads"],
     ["https://x.com/user/status/123", "twitter"],
   ]) assert.equal(detectPlatform(url), platform);
@@ -102,6 +104,37 @@ test("UI normalization supports Instagram mixed carousels with opaque routes", (
   assert.equal(normalized.thumbnail, "https://cdn.example/photo.jpg");
   assert.equal(normalized.duration, null);
   assert.deepEqual(normalized.items.map(({ kind, format }) => [kind, format]), [["photo", "jpg"], ["video", "mp4"]]);
+});
+
+test("UI treats SoundCloud medias as downloadable audio rather than an unplayable manifest", () => {
+  const route = "/api/files/05a289b6-b591-4a8d-b683-79d56cba6167";
+  const normalized = normalizeMedia({
+    status: true, source: "soundcloud", title: "Public audio", duration: 90,
+    thumbnail: "https://i1.sndcdn.com/artworks-example-large.jpg",
+    medias: [{ url: route, type: "audio", extension: "m4a", format: "m4a", filename: "soundcloud-123.m4a", quality: "96 kbps" }],
+  }, "https://soundcloud.com/artist/public-track");
+  assert.equal(normalized.platform, "soundcloud");
+  assert.equal(normalized.title, "Public audio");
+  assert.equal(normalized.duration, 90);
+  assert.deepEqual(normalized.items.map(({ url, kind, format, local, quality }) => ({ url, kind, format, local, quality })), [
+    { url: route, kind: "audio", format: "m4a", local: true, quality: "96 kbps" },
+  ]);
+});
+
+test("UI retains TikTok video and separate audio types for opaque download tickets", () => {
+  const normalized = normalizeMedia({
+    status: true, title: "Public clip", duration: 12,
+    thumbnail: "https://p16-sign.tiktokcdn-us.com/cover.jpg",
+    downloads: [
+      { text: "Download video", quality: "720p", url: "/api/files/05a289b6-b591-4a8d-b683-79d56cba6167", type: "video", format: "mp4", filename: "tiktok-123.mp4", sizeBytes: 10000 },
+      { text: "Download audio", quality: "Audio", url: "/api/files/85a289b6-b591-4a8d-b683-79d56cba6167", type: "audio", format: "mp3", filename: "tiktok-123.mp3" },
+    ],
+  }, "https://www.tiktok.com/@creator/video/7000000000000000000");
+  assert.equal(normalized.platform, "tiktok");
+  assert.deepEqual(normalized.items.map(({ kind, format, local, sizeBytes }) => ({ kind, format, local, sizeBytes })), [
+    { kind: "video", format: "mp4", local: true, sizeBytes: 10000 },
+    { kind: "audio", format: "mp3", local: true, sizeBytes: null },
+  ]);
 });
 
 test("UI normalization rejects unsafe previews and files and leaves absent facts empty", () => {

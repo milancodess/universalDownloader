@@ -941,7 +941,7 @@ form.addEventListener("submit", async (event) => {
   const controller = new AbortController();
   activeRequest = controller;
   const started = Date.now();
-  const timeoutMs = ["youtube", "meta"].includes(platform) ? 70000 : 35000;
+  const timeoutMs = ["youtube", "meta", "soundcloud", "tiktok"].includes(platform) ? 70000 : 35000;
   let timedOut = false;
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
   $("elapsed").textContent = "0s";

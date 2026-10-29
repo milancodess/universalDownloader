@@ -3,6 +3,7 @@ const axios = require("axios");
 const { Readable } = require("node:stream");
 const { pipeline } = require("node:stream/promises");
 const { mediaTickets, validateMediaUrl, MAX_DIRECT_BYTES } = require("../lib/mediaTickets");
+const { createHlsMediaStream } = require("../lib/hlsMedia");
 
 const ALLOWED_CONTENT = /^(?:video\/[a-z0-9.+-]+|audio\/[a-z0-9.+-]+|image\/(?:jpeg|png|gif|webp|avif|heic|heif)|application\/octet-stream)$/i;
 
@@ -40,31 +41,46 @@ function createFileRouter({
     const onClose = () => { if (!res.writableEnded) disconnected.abort(); };
     res.once("close", onClose);
     let upstream;
-    try {
-      let url = ticket.url;
+    const connections = new Set();
+    const request = async (source, limitBytes = maxBytes, validate = validateMediaUrl) => {
+      let url = source;
+      let allowCookies = new URL(source).hostname === new URL(ticket.url).hostname;
+      let response;
       for (let redirects = 0; redirects <= 5; redirects++) {
-        validateMediaUrl(url);
-        upstream = await client.get(url, {
-          responseType: "stream", headers: ticket.headers,
+        validate(url);
+        response = await client.get(url, {
+          responseType: "stream", headers: { ...ticket.headers, ...(allowCookies && ticket.cookies ? { cookie: ticket.cookies } : {}) },
           timeout: inactivityTimeoutMs, signal, maxRedirects: 0,
           decompress: false,
-          maxContentLength: maxBytes, maxBodyLength: 0,
+          maxContentLength: limitBytes, maxBodyLength: 0,
           validateStatus: () => true,
         });
-        if ([301, 302, 303, 307, 308].includes(upstream.status)) {
-          upstream.data.destroy();
-          const location = upstream.headers.location;
+        const connection = response.data;
+        connections.add(connection);
+        connection.once("close", () => connections.delete(connection));
+        if ([301, 302, 303, 307, 308].includes(response.status)) {
+          response.data.destroy();
+          const location = response.headers.location;
           if (redirects === 5 || typeof location !== "string" || /[\s\\\u0000-\u001f\u007f]/u.test(location)) {
             throw new Error("Invalid media redirect");
           }
-          url = validateMediaUrl(new URL(location, url).href);
+          const redirected = validate(new URL(location, url).href);
+          if (new URL(redirected).hostname !== new URL(url).hostname) allowCookies = false;
+          url = redirected;
           continue;
         }
         break;
       }
-
-      if (upstream.status !== 200) throw new Error("Media provider did not return a complete file");
-      if (upstream.headers["content-encoding"] && upstream.headers["content-encoding"] !== "identity") throw new Error("Unexpected media content encoding");
+      if (response.status !== 200) throw new Error("Media provider did not return a complete file");
+      if (response.headers["content-encoding"] && response.headers["content-encoding"] !== "identity") throw new Error("Unexpected media content encoding");
+      const size = response.headers["content-length"];
+      if (size !== undefined && (!/^\d+$/.test(String(size)) || Number(size) > limitBytes)) throw new Error("Media exceeds download size limit");
+      return { ...response, url };
+    };
+    try {
+      upstream = ticket.kind === "hls"
+        ? { data: await createHlsMediaStream(ticket.url, request, { maxBytes, headOnly: req.method === "HEAD" }), headers: { "content-type": "audio/mp4" } }
+        : await request(ticket.url);
       const type = String(upstream.headers["content-type"] || "").split(";")[0].trim();
       if (!ALLOWED_CONTENT.test(type)) throw new Error("Provider response is not media");
       const size = upstream.headers["content-length"];
@@ -88,7 +104,11 @@ function createFileRouter({
       if (!hasMediaSignature(prefix)) throw new Error("Provider did not return a recognizable media file");
 
       res.attachment(ticket.filename);
-      res.type(type);
+      // TikTok serves its MP3 audio with a video/mp4 header. Prefer an actual
+      // MPEG/ADTS signature over that misleading label for browser playback.
+      const mpegAudio = prefix.subarray(0, 3).toString("ascii") === "ID3"
+        || prefix[0] === 0xff && (prefix[1] & 0xe0) === 0xe0;
+      res.type(mpegAudio ? (prefix[0] === 0xff && (prefix[1] & 0xf6) === 0xf0 ? "audio/aac" : "audio/mpeg") : type);
       if (size !== undefined && !upstream.headers["content-encoding"]) res.setHeader("Content-Length", size);
       // Express maps HEAD to this GET handler. Once the prefix is validated,
       // finish the headers instead of downloading an entire body we cannot send.
@@ -119,6 +139,7 @@ function createFileRouter({
     } finally {
       res.removeListener("close", onClose);
       upstream?.data.destroy();
+      for (const stream of connections) stream.destroy();
     }
   });
   return router;

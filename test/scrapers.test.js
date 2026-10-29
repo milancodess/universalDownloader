@@ -6,7 +6,6 @@ const { fetchDouyinVideoInfo } = require("../services/douyinService");
 const { fetchPinterestMedia } = require("../services/pinterestService");
 const redditDownloader = require("../services/redditService");
 const threadsDownloader = require("../services/threadsService");
-const { fetchTikTokData } = require("../services/tiktokService");
 const { twitterDownloader } = require("../services/twitterService");
 
 function respond(t, method, data) {
@@ -60,28 +59,6 @@ test("Threads ignores malformed resolutions and empty photos, preserving sorted 
   assert.deepEqual(result.photos[0].variants.map(({ width, height }) => [width, height]), [
     [1920, 1080], [320, 240],
   ]);
-});
-
-test("TikTok returns a thumbnail URL instead of a CSS declaration and keeps slides", async (t) => {
-  respond(t, "post", `<div id="mainpicture" style="background-image: url('https://cdn.example/cover.jpg')"></div>
-    <a class="download_link" href="https://cdn.example/video.mp4"> Download  video </a>
-    <a class="download_link slide" href="https://cdn.example/slide.jpg">Photo</a>
-    <a class="download_link" href="#modal">Placeholder</a>`);
-  const result = await fetchTikTokData("https://tiktok.com/@user/video/123");
-  assert.equal(result.thumbnail, "https://cdn.example/cover.jpg");
-  assert.deepEqual(result.downloads, [
-    { text: "Download video", url: "https://cdn.example/video.mp4", type: "video" },
-    { url: "https://cdn.example/slide.jpg", type: "photo" },
-  ]);
-});
-
-test("TikTok opaque video, audio, and slide links retain their media kinds in the UI", async (t) => {
-  respond(t, "post", `<a class="download_link" href="https://cdn.example/v?token=1">Without watermark</a>
-    <a class="download_link music" href="https://cdn.example/a?token=2">Download MP3</a>
-    <a class="download_link slide" href="https://cdn.example/p?token=3">Photo</a>`);
-  const result = await fetchTikTokData("https://tiktok.com/@user/video/123");
-  const { normalizeMedia } = require("../web/media");
-  assert.deepEqual(normalizeMedia(result).items.map(({ kind }) => kind), ["video", "audio", "photo"]);
 });
 
 test("Bluesky reads videos using an HTML source child", async (t) => {
@@ -172,9 +149,6 @@ const scrapers = [
     media: (url) => `<ul class="download-box"><li><span class="icon-dlimage"></span><select class="photo-option"><option value="${url}">320x240</option></select></li>
       <li><span class="icon-dlvideo"></span><a title="Download Video" href="${url}">Download</a></li></ul>`,
     base: "https://lovethreads.net", resultUrl: (result) => result.videos[0].url },
-  { name: "TikTok", run: fetchTikTokData, method: "post", wrap: (html) => html,
-    media: (url) => `<a class="download_link" href="${url}">Download</a><a class="download_link slide" href="${url}">Photo</a>`,
-    base: "https://ssstik.io", resultUrl: (result) => result.downloads[0].url },
   { name: "Twitter", run: twitterDownloader, method: "post", wrap: (html) => ({ status: "ok", data: html }),
     media: (url) => `<div class="photo-list"><img src="${url}"></div>`,
     base: "https://savetwitter.net", resultUrl: (result) => result.images[0].url },
