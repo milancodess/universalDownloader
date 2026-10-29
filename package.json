@@ -13,6 +13,7 @@
     "setup:downloader": "node scripts/setup-downloader.js",
     "setup:ffmpeg": "node scripts/setup-ffmpeg.js",
     "verify:downloads": "node scripts/verify-downloads.js",
+    "verify:providers": "node scripts/verify-provider-downloads.js",
     "verify:hd": "node scripts/verify-hd-downloads.js",
     "test": "node --test",
     "test:coverage": "node --test --experimental-test-coverage"

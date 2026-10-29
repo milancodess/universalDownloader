@@ -33,6 +33,12 @@ test("extractor arguments exclude configuration, plugins, playlists, and shell i
   assert.equal(args[args.indexOf("--format") + 1], "bv[protocol=https]+ba[protocol=https]/b[protocol=https]");
   assert.equal(args.includes("--ignore-no-formats-error"), false);
   assert.ok(buildArgs("https://www.instagram.com/p/Example/", "Instagram").includes("--ignore-no-formats-error"));
+  for (const extractor of ["soundcloud", "TikTok"]) {
+    const providerArgs = buildArgs("https://example.com/public-media", extractor);
+    assert.equal(providerArgs[providerArgs.indexOf("--use-extractors") + 1], extractor);
+    assert.ok(providerArgs.includes("--ignore-config") && providerArgs.includes("--no-plugin-dirs"));
+    assert.ok(!providerArgs.includes("--cookies") && !providerArgs.includes("--cookies-from-browser"));
+  }
   assert.throws(() => buildArgs(sample, "generic"), /Unsupported extractor/);
 });
 

@@ -63,7 +63,6 @@ const wrappedPostServices = [
   ["Kuaishou", require("../services/kuaishouService").scrapeKuaishou],
   ["LinkedIn", require("../services/linkedinService").fetchLinkedinData],
   ["Snapchat", require("../services/snapchatService").fetchSnapchat],
-  ["SoundCloud", require("../services/soundcloudService").fetchSoundcloudData],
   ["Spotify", require("../services/spotifyService").fetchSpotify],
   ["Tumblr", require("../services/tumblrService").fetchTumblrData],
 ];

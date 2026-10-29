@@ -78,7 +78,7 @@ npm start
 
    Paste a public media URL and select **Find my media**. The platform is detected
    automatically for common domains; use the platform menu for other aliases.
-   YouTube and Instagram files download through this app. Their download links
+   YouTube, Instagram, SoundCloud, and TikTok files download through this app. Their download links
    expire after 30 minutes; submit the source URL again to refresh them. Other
    providers may open a media URL in your browser; use **Save as** if it plays.
    Preview the media, switch between video, audio, and photos, then choose a file
@@ -140,7 +140,7 @@ origin without credentials, a path, query, or fragment. Forwarded headers alone
 do not grant access. Without this setting, the app compares the browser origin
 with the request's protocol and host.
 
-YouTube and Instagram use the official [yt-dlp](https://github.com/yt-dlp/yt-dlp)
+YouTube, Instagram, SoundCloud, and TikTok use the official [yt-dlp](https://github.com/yt-dlp/yt-dlp)
 runtime instead of third-party download sites. `npm run setup:downloader` installs
 the pinned release into `.runtime/` and verifies its official SHA256 checksum.
 The bundled release includes its JavaScript solver and uses this app's Node.js
@@ -207,15 +207,25 @@ failure. Clients should handle the 502 and 504 statuses above.
 | `/api/youtube/download`     | Download YouTube media            | GET    |
 | `/api/files/:id`            | Stream an app-issued media attachment | GET |
 
-YouTube/Instagram response URLs such as `/api/files/<uuid>` are relative to this
+YouTube/Instagram/SoundCloud/TikTok response URLs such as `/api/files/<uuid>` are relative to this
 server. They identify temporary download tickets, not arbitrary proxy targets.
 Restarting the app invalidates them. Direct CDN file responses validate the media
 bytes and set `Content-Disposition: attachment`; they are limited to 512 MiB and
 five minutes. Prepared HD files use the separate workflow below and support files
 up to 4 GiB, byte ranges, and seeking.
-Only supported Googlevideo, Instagram, and Facebook CDN hosts are allowed,
+Only supported Googlevideo, Instagram, Facebook, SoundCloud, and TikTok media hosts are allowed,
 including after redirects. Extractor headers and signed source URLs remain on
 the server.
+
+SoundCloud's supported finite AAC/fMP4 HLS streams are assembled into an M4A
+attachment from their initialization map and media segments. Every URL and
+redirect is revalidated; live, encrypted, master, discontinuous, and byte-range
+playlists are rejected. Manifests and initialization maps are limited to 1 MiB,
+playlists to 2,000 segments, and the whole transfer to 512 MiB and five minutes.
+TikTok public extraction may issue anonymous playback cookies; only `ttwid`,
+`tt_csrf_token`, and `tt_chain_token` with the expected platform scope are retained.
+They stay on the server, go only to the original media hostname, and are removed
+after any cross-host redirect. Incoming client cookies are never forwarded.
 
 YouTube items with `preparation: true` require `POST <url>/prepare`, then polling
 `GET <url>/status`. Both return `{success:true,data:{state,phaseLabel,progress,...}}`.
@@ -286,6 +296,19 @@ the downloaded MP4 containers (including YouTube audio/video tracks) and an
 Instagram JPEG photo, and saves
 the files and SHA256 report under `.runtime/verified/`.
 
+To verify SoundCloud and TikTok through the app:
+
+```bash
+npm run verify:providers
+```
+
+This downloads a complete public NASA SoundCloud track, a public TikTok video,
+and its separate audio. FFprobe traverses every packet and FFmpeg decodes every
+file; the script checks duration, required streams, attachment headers, and media
+types. Files and SHA256 reports are saved under `.runtime/verified-providers/`.
+It requires FFmpeg/ffprobe. Set `APP_URL` for another app address, or
+`SOUNDCLOUD_TEST_URL` and `TIKTOK_TEST_URL` to verify other public samples.
+
 For full 1080p and 4K verification (about 1.65 GB of completed media):
 
 ```bash
@@ -304,7 +327,7 @@ If you want to add support for other platforms or improve error handling, you're
 
 ## Provider limitations
 
-YouTube and Instagram now extract public media directly with yt-dlp. YouTube
+YouTube, Instagram, SoundCloud, and TikTok extract public media directly with yt-dlp. YouTube
 offers source-native video with audio through 2160p (4K), direct progressive
 files, and separate audio downloads. H.264 is preferred for 1080p and VP9 for 4K,
 with stereo AAC where available; MP4 compatibility at 4K depends on the player's
@@ -326,9 +349,22 @@ HD verification on 2026-10-29 downloaded the entire same YouTube film at
 (VP9 + stereo AAC, 1,373,078,566 bytes). Both are 634.625 seconds long, with
 38,074 video packets and 27,331 audio packets, and passed beginning/end decoding.
 
-The other integrations still rely on third-party download sites. SoundCloud
-contains a static token and a hash tied to one track, and TikTok has a static
-provider parameter. Those integrations need independent live verification.
+SoundCloud accepts public individual tracks and validated `on.soundcloud.com`
+share links, with direct audio or supported finite AAC/fMP4 HLS. Playlists,
+private tracks, paid previews, and unsupported stream formats are rejected.
+TikTok accepts public video, embed, and validated share links, with complete
+video and separate audio when available. Photo slideshow URLs are explicitly
+unsupported; no poster image is presented as a downloadable slideshow.
+Platform sign-in, region, and availability restrictions can still prevent extraction.
+
+Provider verification on 2026-10-29 downloaded the complete NASA SoundCloud
+Apollo 11 sample as AAC M4A (160,497 bytes, 13.029 seconds, 562 audio packets),
+and TikTok video `7047596209028074758` as H.264/AAC MP4 (5,076,682 bytes,
+576×1024, 21.268 seconds) plus MP3 audio (339,008 bytes, 21.133 seconds).
+All three passed full packet traversal and full decoding through the app.
+The static SoundCloud token/track hash and TikTok SSSTik parameter are removed.
+The remaining integrations still rely on third-party download sites and need
+independent live verification.
 
 The shared HTTP client limits each request to 15 seconds, five redirects, a
 5 MiB decoded response, and a 1 MiB request body. Multi-step integrations such as
@@ -337,10 +373,12 @@ in a separate worker with the same HTTP limits and a 15-second overall deadline;
 the worker is terminated on completion or timeout. Its malformed URL form
 encoding is corrected inside that worker. The dependency is obfuscated, so
 provider changes can still require replacing or updating the integration.
-YouTube/Instagram metadata extraction has a 60-second deadline, an 8 MiB output
+YouTube/Instagram/SoundCloud/TikTok metadata extraction has a 60-second deadline, an 8 MiB output
 limit, and a maximum of three simultaneous subprocesses. Cancelling their browser
 request stops the extractor process tree. Cancelling a file transfer closes its
 upstream stream.
+SoundCloud/TikTok short-link resolution shares the same 60-second deadline with
+metadata extraction, and each redirect is checked before it is followed.
 
 Parsed download links are restricted to HTTP(S), without embedded credentials.
 The browser also filters links and renders provider text without interpreting

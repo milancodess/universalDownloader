@@ -3,6 +3,7 @@ const { test } = require("node:test");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
+const { EXTRACT_TIMEOUT_MS } = require("../lib/ytDlp");
 
 // Run the browser event handlers with a small DOM fixture, without network or
 // animation timing, to reproduce late events from replaced media elements.
@@ -147,3 +148,35 @@ test("replacing a source cancels a preparation that has no controls in the new r
   assert.equal(vm.runInContext("lastPreparationIssue", context), null);
   assert.equal(vm.runInContext("preparationJobs.size", context), 0);
 });
+
+for (const [platform, source] of [
+  ["SoundCloud", "https://soundcloud.com/artist/public-track"],
+  ["TikTok", "https://www.tiktok.com/@creator/video/7000000000000000000"],
+]) {
+  test(`${platform} extraction can use the server deadline before browser timeout recovery`, async () => {
+    const { context, get } = loadApp();
+    const timers = [];
+    let requestSignal;
+    context.setTimeout = (callback, delay) => { timers.push({ callback, delay }); return timers.length; };
+    context.setInterval = () => 1;
+    context.clearInterval = () => {};
+    context.fetch = (url, { signal }) => new Promise((resolve, reject) => {
+      requestSignal = signal;
+      signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+    });
+    get("media-url").value = source;
+    const pending = get("download-form").listeners.get("submit")[0]({ preventDefault() {} });
+    assert.equal(requestSignal.aborted, false);
+    assert.equal(get("submit-button").disabled, true);
+    // The previous 35-second browser timeout cut off otherwise valid 60-second
+    // extractor work. Let the backend finish or report its own timeout first.
+    const deadline = timers.find(({ delay }) => delay > EXTRACT_TIMEOUT_MS);
+    assert.ok(deadline, "browser deadline must exceed the extractor deadline");
+    assert.equal(timers.some(({ delay }) => delay > 1000 && delay <= EXTRACT_TIMEOUT_MS), false);
+    deadline.callback();
+    await pending;
+    assert.equal(requestSignal.aborted, true);
+    assert.equal(get("submit-button").disabled, false);
+    assert.match(get("search-error-message").textContent, /took too long/);
+  });
+}
