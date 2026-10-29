@@ -1,5 +1,7 @@
 const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
+const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
+const providerUrl = "https://savetwitter.net/en4";
 
 /**
  * Twitter / X Downloader Service
@@ -40,8 +42,8 @@ async function twitterDownloader(tweetUrl) {
   const duration =
     $(".tw-middle p").first().text().trim() || null;
   const thumbnail =
-    $(".thumbnail img").attr("src") ||
-    $(".download-items__thumb img").attr("src") ||
+    resolveMediaUrl($(".thumbnail img").attr("src"), providerUrl) ||
+    resolveMediaUrl($(".download-items__thumb img").attr("src"), providerUrl) ||
     null;
 
   const videos = [];
@@ -49,14 +51,14 @@ async function twitterDownloader(tweetUrl) {
 
   // Video links
   $(".tw-button-dl").each((_, el) => {
-    const href = $(el).attr("href");
+    const href = resolveMediaUrl($(el).attr("href"), providerUrl);
     const text = $(el).text();
 
-    if (!href || !href.includes("dl.snapcdn.app")) return;
+    if (!href || new URL(href).hostname !== "dl.snapcdn.app") return;
 
     // MP4 videos
-    if (text.includes("MP4")) {
-      const qualityMatch = text.match(/\((\d+p)\)/);
+    if (/\bmp4\b/i.test(text)) {
+      const qualityMatch = text.match(/\((\d+p)\)/i);
       videos.push({
         quality: qualityMatch ? qualityMatch[1] : "unknown",
         url: href,
@@ -64,14 +66,14 @@ async function twitterDownloader(tweetUrl) {
     }
 
     // Image download button
-    if (text.includes("图片")) {
+    if (/\b(?:jpe?g|png|webp|image|photo)\b|图片/i.test(text)) {
       images.push({ url: href });
     }
   });
 
   // Photo-only tweets
   $(".photo-list img").each((_, img) => {
-    const src = $(img).attr("src");
+    const src = resolveMediaUrl($(img).attr("src"), providerUrl);
     if (src) images.push({ url: src });
   });
 

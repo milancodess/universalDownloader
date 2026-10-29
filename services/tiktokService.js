@@ -1,6 +1,8 @@
 const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
 const qs = require("qs");
+const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
+const providerUrl = "https://ssstik.io/en-1";
 
 async function fetchTikTokData(videoUrl) {
   try {
@@ -36,8 +38,8 @@ async function fetchTikTokData(videoUrl) {
     const background = $("#mainpicture").css("background-image") || "";
     const backgroundUrl = background.match(/^url\(\s*(['"]?)(.*?)\1\s*\)$/i);
     const thumbnail =
-      $(".result_author").attr("src") ||
-      (backgroundUrl && backgroundUrl[2]) ||
+      resolveMediaUrl($(".result_author").attr("src"), providerUrl) ||
+      resolveMediaUrl(backgroundUrl && backgroundUrl[2], providerUrl) ||
       null;
 
     const downloads = [];
@@ -45,20 +47,23 @@ async function fetchTikTokData(videoUrl) {
     // VIDEO / AUDIO DOWNLOADS
     $("a.download_link:not(.slide)").each((_, el) => {
       const text = $(el).text().replace(/\s+/g, " ").trim();
-      const url = $(el).attr("href");
+      const url = resolveMediaUrl($(el).attr("href"), providerUrl);
 
-      if (!url || url.startsWith("#")) return;
+      if (!url) return;
 
-      downloads.push({ text, url });
+      // SSSTik uses opaque URLs for both tracks. Keep the type indicated by
+      // its audio button so the browser can offer the right preview and tab.
+      const type = $(el).hasClass("music") || /\b(?:mp3|audio)\b/i.test(text) ? "audio" : "video";
+      downloads.push({ text, url, type });
     });
 
     // PHOTO / SLIDE DOWNLOADS
     $("a.download_link.slide").each((_, el) => {
-      const url = $(el).attr("href");
+      const url = resolveMediaUrl($(el).attr("href"), providerUrl);
 
-      if (!url || url.startsWith("#")) return;
+      if (!url) return;
 
-      downloads.push({ url });
+      downloads.push({ url, type: "photo" });
     });
 
     if (!downloads.length) {

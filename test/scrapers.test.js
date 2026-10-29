@@ -34,6 +34,14 @@ test("Pinterest accepts a direct media URL", async (t) => {
   assert.equal(result.downloads[0].url, "https://cdn.example/image.jpg");
 });
 
+test("Pinterest preserves direct CDN URLs with their own url query parameter", async (t) => {
+  const target = "https://cdn.example/image.jpg?url=original%2Fimage.jpg&signature=abc";
+  respond(t, "get", `<table><tbody><tr><td class="video-quality">Original</td><td>JPG</td>
+    <td><a href="${target.replaceAll("&", "&amp;")}">Download</a></td></tr></tbody></table>`);
+  const result = await fetchPinterestMedia("https://pinterest.com/pin/123/");
+  assert.equal(result.downloads[0].url, target);
+});
+
 test("Threads ignores malformed resolutions and empty photos, preserving sorted variants", async (t) => {
   respond(t, "post", { status: "ok", data: `<ul class="download-box">
     <li><span class="icon-dlimage"></span><select class="photo-option">
@@ -62,9 +70,18 @@ test("TikTok returns a thumbnail URL instead of a CSS declaration and keeps slid
   const result = await fetchTikTokData("https://tiktok.com/@user/video/123");
   assert.equal(result.thumbnail, "https://cdn.example/cover.jpg");
   assert.deepEqual(result.downloads, [
-    { text: "Download video", url: "https://cdn.example/video.mp4" },
-    { url: "https://cdn.example/slide.jpg" },
+    { text: "Download video", url: "https://cdn.example/video.mp4", type: "video" },
+    { url: "https://cdn.example/slide.jpg", type: "photo" },
   ]);
+});
+
+test("TikTok opaque video, audio, and slide links retain their media kinds in the UI", async (t) => {
+  respond(t, "post", `<a class="download_link" href="https://cdn.example/v?token=1">Without watermark</a>
+    <a class="download_link music" href="https://cdn.example/a?token=2">Download MP3</a>
+    <a class="download_link slide" href="https://cdn.example/p?token=3">Photo</a>`);
+  const result = await fetchTikTokData("https://tiktok.com/@user/video/123");
+  const { normalizeMedia } = require("../web/media");
+  assert.deepEqual(normalizeMedia(result).items.map(({ kind }) => kind), ["video", "audio", "photo"]);
 });
 
 test("Bluesky reads videos using an HTML source child", async (t) => {
@@ -76,6 +93,15 @@ test("Bluesky reads videos using an HTML source child", async (t) => {
   const result = await fetchBlueskyMedia("https://bsky.app/profile/user/post/123");
   assert.equal(result.videoCount, 1);
   assert.equal(result.videos[0].url, "https://cdn.example/video.mp4");
+});
+
+test("Bluesky skips broken video sources and resolves a usable fallback", async (t) => {
+  respond(t, "get", `<section class="download_result_section"><div class="download_item">
+    <div class="video_wrapper"><video src="#placeholder">
+      <source src="javascript:alert(1)"><source src="/media/video.mp4">
+    </video></div></div></section>`);
+  const result = await fetchBlueskyMedia("https://bsky.app/profile/user/post/123");
+  assert.equal(result.videos[0].url, "https://bskysaver.com/media/video.mp4");
 });
 
 test("Reddit resolves relative download links", async (t) => {
@@ -105,6 +131,17 @@ test("Twitter keeps highest quality first and supports photo-only posts", async 
   assert.equal(photo.images.length, 1);
 });
 
+test("Twitter checks the download hostname and recognizes English photo labels", async (t) => {
+  respond(t, "post", { status: "ok", data: `
+    <a class="tw-button-dl" href="https://evil.example/dl.snapcdn.app/fake">MP4 (1080p)</a>
+    <a class="tw-button-dl" href="https://dl.snapcdn.app.evil.example/fake">MP4 (720p)</a>
+    <a class="tw-button-dl" href="https://dl.snapcdn.app@evil.example/fake">MP4 (480p)</a>
+    <a class="tw-button-dl" href="https://dl.snapcdn.app/photo">Download Image</a>` });
+  const result = await twitterDownloader("https://x.com/user/status/123");
+  assert.deepEqual(result.videos, []);
+  assert.deepEqual(result.images, [{ url: "https://dl.snapcdn.app/photo" }]);
+});
+
 test("Douyin retains downloadable links while excluding profile actions", async (t) => {
   respond(t, "post", { status: "ok", data: `<div class="tik-right"><div class="dl-action">
     <a class="tik-button-dl" href="https://cdn.example/video.mp4">Download MP4</a>
@@ -116,16 +153,50 @@ test("Douyin retains downloadable links while excluding profile actions", async 
 });
 
 const scrapers = [
-  { name: "Bluesky", run: fetchBlueskyMedia, method: "get", wrap: (html) => html },
-  { name: "Douyin", run: fetchDouyinVideoInfo, method: "post", wrap: (html) => ({ status: "ok", data: html }) },
-  { name: "Pinterest", run: fetchPinterestMedia, method: "get", wrap: (html) => html },
-  { name: "Reddit", run: redditDownloader, method: "get", wrap: (html) => html },
-  { name: "Threads", run: threadsDownloader, method: "post", wrap: (html) => ({ status: "ok", data: html }) },
-  { name: "TikTok", run: fetchTikTokData, method: "post", wrap: (html) => html },
-  { name: "Twitter", run: twitterDownloader, method: "post", wrap: (html) => ({ status: "ok", data: html }) },
+  { name: "Bluesky", run: fetchBlueskyMedia, method: "get", wrap: (html) => html,
+    media: (url) => `<section class="download_result_section"><div class="download_item">
+      <div class="image_wrapper"><img src="${url}"></div>
+      <a class="download__item__info__actions__button" href="${url}"></a>
+      <div class="video_wrapper"><video src="${url}"></video></div></div></section>`,
+    base: "https://bskysaver.com", resultUrl: (result) => result.videos[0].url },
+  { name: "Douyin", run: fetchDouyinVideoInfo, method: "post", wrap: (html) => ({ status: "ok", data: html }),
+    media: (url) => `<div class="tik-right"><div class="dl-action"><a class="tik-button-dl" href="${url}">MP4</a></div></div><video id="vid" data-src="${url}"></video>`,
+    base: "https://tikvideo.app", resultUrl: (result) => result.links[0].url },
+  { name: "Pinterest", run: fetchPinterestMedia, method: "get", wrap: (html) => html,
+    media: (url) => `<table><tbody><tr><td class="video-quality">720p</td><td>MP4</td><td><a href="${url}">Download</a></td></tr></tbody></table>`,
+    base: "https://www.savepin.app", resultUrl: (result) => result.downloads[0].url },
+  { name: "Reddit", run: redditDownloader, method: "get", wrap: (html) => html,
+    media: (url) => `<a class="downloadbutton" href="${url}">Download</a>`,
+    base: "https://rapidsave.com", resultUrl: (result) => result },
+  { name: "Threads", run: threadsDownloader, method: "post", wrap: (html) => ({ status: "ok", data: html }),
+    media: (url) => `<ul class="download-box"><li><span class="icon-dlimage"></span><select class="photo-option"><option value="${url}">320x240</option></select></li>
+      <li><span class="icon-dlvideo"></span><a title="Download Video" href="${url}">Download</a></li></ul>`,
+    base: "https://lovethreads.net", resultUrl: (result) => result.videos[0].url },
+  { name: "TikTok", run: fetchTikTokData, method: "post", wrap: (html) => html,
+    media: (url) => `<a class="download_link" href="${url}">Download</a><a class="download_link slide" href="${url}">Photo</a>`,
+    base: "https://ssstik.io", resultUrl: (result) => result.downloads[0].url },
+  { name: "Twitter", run: twitterDownloader, method: "post", wrap: (html) => ({ status: "ok", data: html }),
+    media: (url) => `<div class="photo-list"><img src="${url}"></div>`,
+    base: "https://savetwitter.net", resultUrl: (result) => result.images[0].url },
 ];
 
 for (const scraper of scrapers) {
+  test(`${scraper.name} resolves provider-relative media links`, async (t) => {
+    respond(t, scraper.method, scraper.wrap(scraper.media("/media/file.mp4")));
+    const result = await scraper.run("https://example.com/post/123");
+    assert.equal(scraper.resultUrl(result), `${scraper.base}/media/file.mp4`);
+  });
+
+  test(`${scraper.name} rejects unsafe or malformed media instead of reporting success`, async (t) => {
+    t.mock.method(console, "error", () => {});
+    for (const url of ["javascript:alert(1)", "data:video/mp4;base64,AAAA", "#media",
+      "https://user:password@cdn.example/video.mp4", "https://cdn.example/\nvideo.mp4"]) {
+      const mock = respond(t, scraper.method, scraper.wrap(scraper.media(url)));
+      await assert.rejects(scraper.run("https://example.com/post/123"), /No media found|Download link not found/);
+      mock.mock.restore();
+    }
+  });
+
   test(`${scraper.name} rejects an upstream error page instead of reporting empty success`, async (t) => {
     t.mock.method(console, "error", () => {});
     respond(t, scraper.method, scraper.wrap("<html><h1>Service unavailable</h1></html>"));

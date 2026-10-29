@@ -1,5 +1,6 @@
 const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
+const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
 
 async function fetchPinterestMedia(url) {
   const encodedUrl = encodeURIComponent(url);
@@ -29,23 +30,25 @@ async function fetchPinterestMedia(url) {
 
     const $ = cheerio.load(response.data);
     const title = $("h1").first().text().trim();
-    const thumbnail = $(".image-container img").attr("src");
+    const thumbnail = resolveMediaUrl($(".image-container img").attr("src"), fullUrl);
     const results = [];
 
     $("tbody tr").each((_, el) => {
       const quality = $(el).find(".video-quality").text().trim();
       const format = $(el).find("td:nth-child(2)").text().trim();
       const href = $(el).find("a").attr("href");
-      if (!href || href.startsWith("#")) return;
+      const wrapperUrl = resolveMediaUrl(href, fullUrl);
+      if (!wrapperUrl) return;
 
       let directUrl;
       try {
-        const link = new URL(href, fullUrl);
-        // Decode the nested URL once, without appending the wrapper's other parameters.
-        const target = link.searchParams.has("url") ? link.searchParams.get("url") : link.href;
-        const parsed = new URL(target);
-        if (!["http:", "https:"].includes(parsed.protocol)) return;
-        directUrl = parsed.href;
+        const link = new URL(wrapperUrl);
+        // Only SavePin wrappers contain a nested destination. A direct CDN URL
+        // may have its own signed `url` parameter, which must remain untouched.
+        const providerHost = new URL(fullUrl).hostname;
+        const wrapped = link.hostname === providerHost && link.searchParams.has("url");
+        const target = wrapped ? link.searchParams.get("url") : link.href;
+        directUrl = resolveMediaUrl(target);
       } catch {
         // One malformed row should not hide the remaining download options.
         return;

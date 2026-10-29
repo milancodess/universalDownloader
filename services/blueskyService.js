@@ -1,5 +1,6 @@
 const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
+const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
 
 async function fetchBlueskyMedia(postUrl) {
   const url =
@@ -35,7 +36,7 @@ async function fetchBlueskyMedia(postUrl) {
 
     handle: profileBox.find("span").first().text().trim() || null,
 
-    avatar: profileBox.find("img").first().attr("src") || null,
+    avatar: resolveMediaUrl(profileBox.find("img").first().attr("src"), url),
   };
 
   /* ───────────── CAPTION ───────────── */
@@ -57,18 +58,18 @@ async function fetchBlueskyMedia(postUrl) {
     if (item.find(".image_wrapper img").length) {
       const img = item.find(".image_wrapper img").first();
 
-      const url = item
+      const photoUrl = resolveMediaUrl(item
         .find("a.download__item__info__actions__button")
-        .attr("href");
+        .attr("href"), url);
 
-      if (url && !url.startsWith("#")) {
+      if (photoUrl) {
         photos.push({
           index: photos.length + 1,
-          thumbnail: img.attr("src"),
+          thumbnail: resolveMediaUrl(img.attr("src"), url),
           variants: [
             {
               resolution: "best",
-              url,
+              url: photoUrl,
             },
           ],
         });
@@ -79,13 +80,14 @@ async function fetchBlueskyMedia(postUrl) {
     if (item.find(".video_wrapper video").length) {
       const video = item.find(".video_wrapper video").first();
 
-      const url = video.attr("src") || video.find("source").first().attr("src");
-      if (!url || url.startsWith("#")) return;
+      const videoUrl = [video.attr("src"), ...video.find("source").toArray().map((source) => $(source).attr("src"))]
+        .map((source) => resolveMediaUrl(source, url)).find(Boolean);
+      if (!videoUrl) return;
 
       videos.push({
         index: videos.length + 1,
-        thumbnail: video.attr("poster") || null,
-        url,
+        thumbnail: resolveMediaUrl(video.attr("poster"), url),
+        url: videoUrl,
         format: "mp4",
       });
     }

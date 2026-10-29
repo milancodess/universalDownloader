@@ -1,5 +1,7 @@
 const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
+const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
+const providerUrl = "https://lovethreads.net/en";
 
 async function threadsDownloader(postUrl) {
   const endpoint = "https://lovethreads.net/api/ajaxSearch";
@@ -33,18 +35,18 @@ async function threadsDownloader(postUrl) {
 
     /* ───────────── PHOTO ───────────── */
     if (item.find(".icon-dlimage").length) {
-      const thumbnail = item
+      const thumbnail = resolveMediaUrl(item
         .find(".download-items__thumb img")
-        .attr("src");
+        .attr("src"), providerUrl);
 
       const variants = [];
 
       item.find(".photo-option option").each((_, opt) => {
-        const url = $(opt).attr("value");
+        const url = resolveMediaUrl($(opt).attr("value"), providerUrl);
         const label = $(opt).text().trim();
 
         const dimensions = label.match(/^(\d+)\s*[x×]\s*(\d+)$/i);
-        if (!url || url.startsWith("#") || !dimensions) return;
+        if (!url || !dimensions) return;
 
         const width = Number(dimensions[1]);
         const height = Number(dimensions[2]);
@@ -73,15 +75,15 @@ async function threadsDownloader(postUrl) {
 
     /* ───────────── VIDEO ───────────── */
     if (item.find(".icon-dlvideo").length) {
-      const thumbnail = item
+      const thumbnail = resolveMediaUrl(item
         .find(".download-items__thumb img")
-        .attr("src");
+        .attr("src"), providerUrl);
 
-      const videoUrl = item
+      const videoUrl = resolveMediaUrl(item
         .find('a[title="Download Video"]')
-        .attr("href");
+        .attr("href"), providerUrl);
 
-      if (!videoUrl || videoUrl.startsWith("#")) return;
+      if (!videoUrl) return;
 
       videos.push({
         index: videos.length + 1,

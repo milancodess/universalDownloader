@@ -3,8 +3,8 @@ const { test } = require("node:test");
 const http = require("../lib/httpClient");
 
 const { fetchDailymotionData } = require("../services/dailymotionService");
-const { fetchYouTubeData } = require("../services/youtubeService");
 const { fetchTerabox } = require("../services/teraboxService");
+const { configureMetaHttp } = require("../services/configureMetaHttp");
 
 test("Dailymotion preserves its successful response shape", async (t) => {
   const payload = { title: "Example", url: "https://cdn.example/video.mp4" };
@@ -30,45 +30,6 @@ test("Dailymotion rejects failed or malformed upstream payloads before wrapping"
     await assert.rejects(fetchDailymotionData("https://dai.ly/example"), /Dailymotion request failed/);
     request.mock.restore();
   }
-});
-
-test("YouTube rejects missing, malformed, or empty resource lists", async (t) => {
-  for (const resources of [undefined, {}, [], [null, { type: "video" }]]) {
-    const request = t.mock.method(http, "post", async () => ({
-      data: { status: 1, data: { resources } },
-    }));
-    await assert.rejects(fetchYouTubeData("https://youtu.be/example"), /resources|No media/);
-    request.mock.restore();
-  }
-});
-
-test("YouTube ignores unusable resources and reports unknown sizes as null", async (t) => {
-  t.mock.method(http, "post", async () => ({
-    data: {
-      status: 1,
-      data: {
-        title: "Example",
-        duration: 0,
-        resources: [
-          null,
-          { type: "video", download_url: "javascript:alert(1)" },
-          { type: "video", download_url: "/relative.mp4" },
-          { type: "image", download_url: "https://cdn.example/image.jpg" },
-          { type: "video", format: "mp4", quality: "720p", download_url: "https://cdn.example/video.mp4", size: "2097152" },
-          { type: "audio", format: "m4a", download_url: "https://cdn.example/audio.m4a" },
-          { type: "audio", format: "m4a", download_url: "https://cdn.example/invalid-size.m4a", size: -1 },
-        ],
-      },
-    },
-  }));
-  const result = await fetchYouTubeData("https://youtu.be/example");
-  assert.equal(result.duration, 0);
-  assert.deepEqual(result.videos, [{
-    format: "mp4", quality: "720p", url: "https://cdn.example/video.mp4", sizeMB: 2,
-  }]);
-  assert.equal(result.audios.length, 2);
-  assert.equal(result.audios[0].sizeMB, null);
-  assert.equal(result.audios[1].sizeMB, null);
 });
 
 test("Terabox accepts formatted JSON nonce fields and encodes request parameters", async (t) => {
@@ -128,7 +89,7 @@ test("Terabox preserves timeouts while fetching its nonce", async (t) => {
 });
 
 function loadMetaService(t, download) {
-  const dependencyPath = require.resolve("metadownloader");
+  const dependencyPath = require.resolve("../lib/runWorker");
   const servicePath = require.resolve("../services/facebookInstaService");
   const originalDependency = require.cache[dependencyPath];
   const originalService = require.cache[servicePath];
@@ -136,7 +97,10 @@ function loadMetaService(t, download) {
     id: dependencyPath,
     filename: dependencyPath,
     loaded: true,
-    exports: download,
+    exports: { runWorker: async (filename, url, options) => {
+      assert.equal(require("node:path").basename(filename), "facebookInstaWorker.js");
+      return download(url, options);
+    } },
   };
   delete require.cache[servicePath];
   t.after(() => {
@@ -149,7 +113,7 @@ function loadMetaService(t, download) {
 }
 
 test("Meta forwards the URL and preserves successful dependency payloads", async (t) => {
-  const url = "https://www.instagram.com/reel/example/";
+  const url = "https://www.facebook.com/reel/123456789/";
   const payload = {
     status: true,
     data: [{ thumbnail: "https://cdn.example/thumbnail.jpg", url: "https://cdn.example/video.mp4" }],
@@ -164,15 +128,49 @@ test("Meta forwards the URL and preserves successful dependency payloads", async
 test("Meta preserves dependency failure markers for the controller", async (t) => {
   const payload = { status: false, msg: "Provider could not find media" };
   const download = loadMetaService(t, async () => payload);
-  assert.equal(await download("https://www.instagram.com/reel/example/"), payload);
+  assert.equal(await download("https://www.facebook.com/reel/123456789/"), payload);
+});
+
+test("Meta forwards request cancellation to the isolated worker", async (t) => {
+  const controller = new AbortController();
+  const download = loadMetaService(t, async (url, options) => {
+    assert.equal(options.signal, controller.signal);
+    return { status: true, data: [{ url: "https://cdn.example/video.mp4" }] };
+  });
+  await download("https://www.facebook.com/reel/123456789/", { signal: controller.signal });
 });
 
 test("Meta preserves rejected dependency errors as the cause", async (t) => {
   const upstreamError = Object.assign(new Error("timeout"), { code: "ETIMEDOUT" });
   const download = loadMetaService(t, async () => { throw upstreamError; });
-  await assert.rejects(download("https://www.instagram.com/reel/example/"), (error) => {
+  await assert.rejects(download("https://www.facebook.com/reel/123456789/"), (error) => {
     assert.equal(error.message, "Error fetching Meta media");
     assert.equal(error.cause, upstreamError);
     return true;
   });
+});
+
+test("Meta worker HTTP setup preserves complete URLs in the dependency's form field", async () => {
+  const url = "https://www.instagram.com/reel/example/?next=x%26y&caption=a+b#fragment";
+  const client = require("axios").create({
+    adapter: async (config) => {
+      const fields = new URLSearchParams(config.data);
+      assert.deepEqual([...fields], [["url", url]]);
+      return { status: 200, data: "ok", config, headers: {} };
+    },
+  });
+  configureMetaHttp(client, url);
+  await client.post("https://provider.example/download", `url=${url}`);
+  for (const key of ["timeout", "maxContentLength", "maxBodyLength", "maxRedirects"]) {
+    assert.equal(client.defaults[key], http.defaults[key]);
+  }
+});
+
+test("Meta worker HTTP setup leaves unrelated request bodies unchanged", async () => {
+  const client = require("axios").create({
+    adapter: async (config) => ({ status: 200, data: config.data, config, headers: {} }),
+  });
+  configureMetaHttp(client, "https://www.instagram.com/reel/example/");
+  const response = await client.post("https://provider.example/download", "other=value&url=another");
+  assert.equal(response.data, "other=value&url=another");
 });

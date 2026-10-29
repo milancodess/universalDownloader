@@ -1,5 +1,6 @@
 const axios = require("../lib/httpClient");
 const cheerio = require("cheerio");
+const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
 
 async function redditDownloader(url) {
   try {
@@ -19,18 +20,12 @@ async function redditDownloader(url) {
 
     const $ = cheerio.load(res.data);
 
-    const downloadUrl = $("a.downloadbutton").attr("href");
-
-    if (!downloadUrl || downloadUrl.startsWith("#")) {
+    const downloadUrl = resolveMediaUrl($("a.downloadbutton").attr("href"), rapidUrl);
+    if (!downloadUrl) {
       throw new Error("Download link not found");
     }
 
-    const resolvedUrl = new URL(downloadUrl, rapidUrl);
-    if (!["http:", "https:"].includes(resolvedUrl.protocol)) {
-      throw new Error("Download link not found");
-    }
-
-    return resolvedUrl.href;
+    return downloadUrl;
   } catch (err) {
     throw new Error(err.message, { cause: err });
   }

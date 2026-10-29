@@ -8,3 +8,5 @@ ignore/
 .env.*
 !.env.example
 coverage/
+.runtime/
+.hallmark/

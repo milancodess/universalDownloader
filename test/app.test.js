@@ -53,6 +53,47 @@ test("unknown routes return JSON 404", async () => {
   assert.deepEqual(await response.json(), { success: false, error: "Endpoint not found" });
 });
 
+test("malformed route parameter encoding returns a client error", async () => {
+  const response = await fetch(`${baseUrl}/api/files/%E0%A4%A`);
+  assert.equal(response.status, 400);
+  assert.deepEqual(await response.json(), { success: false, error: "Invalid URL encoding" });
+});
+
+test("browser interface and its scripts are served with restrictive security headers", async () => {
+  const page = await fetch(`${baseUrl}/app`);
+  assert.equal(page.status, 200);
+  assert.equal(page.url, `${baseUrl}/app/`);
+  assert.match(page.headers.get("content-type"), /text\/html/);
+  assert.match(page.headers.get("content-security-policy"), /script-src 'self'/);
+  assert.match(page.headers.get("content-security-policy"), /img-src 'self' https:/);
+  assert.match(page.headers.get("content-security-policy"), /media-src 'self' https:/);
+  assert.match(page.headers.get("content-security-policy"), /font-src 'self'/);
+  assert.equal(page.headers.get("referrer-policy"), "no-referrer");
+  assert.match(await page.text(), /id="download-form"/);
+  for (const asset of ["app.js", "media.js", "theme.js", "styles.css", "fonts/Manrope.ttf", "fonts/Sora.ttf", "assets/nasa-example.jpg", "assets/big-buck-bunny.jpg"]) {
+    const response = await fetch(`${baseUrl}/app/${asset}`);
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  }
+  const traversal = await fetch(`${baseUrl}/app/%2e%2e%2fpackage.json`);
+  assert.equal(traversal.status, 404);
+});
+
+test("invalid PORT values fail clearly instead of creating a named pipe", () => {
+  for (const port of ["named-pipe", "65536", "-1", "3000junk"]) {
+    assert.throws(() => execFileSync(process.execPath, ["index.js"], {
+      cwd: path.join(__dirname, ".."),
+      env: { ...process.env, PORT: port },
+      timeout: 10000,
+      stdio: "pipe",
+    }), (error) => {
+      assert.equal(error.status, 1);
+      assert.match(error.stderr.toString(), /PORT must be a number/);
+      return true;
+    });
+  }
+});
+
 test("malformed JSON is a client error without parser details", async () => {
   const response = await fetch(baseUrl, {
     method: "POST",
