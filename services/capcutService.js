@@ -1,4 +1,4 @@
-const axios = require("../lib/httpClient");
+const axios = require("axios");
 
 async function fetchCapcutData(url) {
   try {
@@ -31,7 +31,7 @@ async function fetchCapcutData(url) {
 
     return response.data;
   } catch (error) {
-    throw new Error("Capcut API request failed", { cause: error });
+    throw new Error(`Capcut API request failed: ${error.message}`);
   }
 }
 

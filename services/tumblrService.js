@@ -1,4 +1,4 @@
-const axios = require("../lib/httpClient");
+const axios = require("axios");
 
 /**
  * Fetch Tumblr download data from Tumbleclip API.
@@ -35,7 +35,7 @@ async function fetchTumblrData(tumblrUrl) {
 
     return res.data;
   } catch (error) {
-    throw new Error("Tumbleclip request failed", { cause: error });
+    throw new Error(`Tumbleclip request failed: ${error.message}`);
   }
 }
 

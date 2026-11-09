@@ -1,4 +1,4 @@
-const axios = require("../lib/httpClient");
+const axios = require("axios");
 
 async function fetchSnapchat(url) {
   try {
@@ -26,12 +26,14 @@ async function fetchSnapchat(url) {
           "user-agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
         },
+        maxBodyLength: Infinity,
       }
     );
 
     return response.data;
   } catch (error) {
-    throw new Error("Snapchat API request failed", { cause: error });
+    console.error(error.response?.data || error.message);
+    throw new Error(`Snapchat API request failed: ${error.message}`);
   }
 }
 

@@ -1,5 +1,4 @@
-const axios = require("../lib/httpClient");
-const { isDownloadResult } = require("../lib/providerResponse");
+const axios = require("axios");
 
 async function fetchDailymotionData(videoUrl) {
   try {
@@ -13,16 +12,15 @@ async function fetchDailymotionData(videoUrl) {
       },
     });
 
-    if (!isDownloadResult(data)) {
-      throw new Error("Dailymotion provider returned no media");
-    }
-
     return {
       success: true,
       data,
     };
   } catch (error) {
-    throw new Error("Dailymotion request failed", { cause: error });
+    return {
+      success: false,
+      error: error.message,
+    };
   }
 }
 

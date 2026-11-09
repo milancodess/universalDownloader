@@ -1,16 +1,11 @@
-const path = require("node:path");
-const { runWorker } = require("../lib/runWorker");
+const snapsave = require("metadownloader");
 
-async function facebookInsta(url, options = {}) {
-  const hostname = new URL(url).hostname.toLowerCase().replace(/\.$/, "");
-  if (hostname === "instagram.com" || hostname.endsWith(".instagram.com")) {
-    return require("./instagramService").fetchInstagramData(url, options);
-  }
+async function facebookInsta(url) {
   try {
-    const result = await runWorker(path.join(__dirname, "facebookInstaWorker.js"), url, { signal: options.signal });
+    const result = await snapsave(url); // or snapsave.facebook(url) for FB links
     return result;
   } catch (error) {
-    throw new Error("Error fetching Meta media", { cause: error });
+    throw new Error("Error fetching media: " + error.message);
   }
 }
 

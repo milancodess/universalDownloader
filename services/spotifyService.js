@@ -1,4 +1,4 @@
-const axios = require("../lib/httpClient");
+const axios = require("axios");
 
 async function fetchSpotify(url) {
   if (!url || typeof url !== "string") {
@@ -28,21 +28,20 @@ async function fetchSpotify(url) {
     return res.data;
   } catch (err) {
     if (err.code === "ECONNABORTED") {
-      throw new Error("Request timeout from MusicFab API", { cause: err });
+      throw new Error("Request timeout from MusicFab API");
     }
 
     if (err.response) {
       throw new Error(
         `MusicFab API error: ${err.response.status} ${err.response.statusText}`,
-        { cause: err },
       );
     }
 
     if (err.request) {
-      throw new Error("No response received from MusicFab API", { cause: err });
+      throw new Error("No response received from MusicFab API");
     }
 
-    throw new Error("MusicFab request failed", { cause: err });
+    throw new Error(`Request failed: ${err.message}`);
   }
 }
 

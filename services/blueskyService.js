@@ -1,6 +1,5 @@
-const axios = require("../lib/httpClient");
+const axios = require("axios");
 const cheerio = require("cheerio");
-const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
 
 async function fetchBlueskyMedia(postUrl) {
   const url =
@@ -13,10 +12,6 @@ async function fetchBlueskyMedia(postUrl) {
       referer: "https://bskysaver.com/",
     },
   });
-
-  if (typeof html !== "string") {
-    throw new Error("Invalid response from Bluesky saver");
-  }
 
   const $ = cheerio.load(html);
   const section = $("section.download_result_section");
@@ -36,7 +31,7 @@ async function fetchBlueskyMedia(postUrl) {
 
     handle: profileBox.find("span").first().text().trim() || null,
 
-    avatar: resolveMediaUrl(profileBox.find("img").first().attr("src"), url),
+    avatar: profileBox.find("img").first().attr("src") || null,
   };
 
   /* ───────────── CAPTION ───────────── */
@@ -58,36 +53,35 @@ async function fetchBlueskyMedia(postUrl) {
     if (item.find(".image_wrapper img").length) {
       const img = item.find(".image_wrapper img").first();
 
-      const photoUrl = resolveMediaUrl(item
+      const url = item
         .find("a.download__item__info__actions__button")
-        .attr("href"), url);
+        .attr("href");
 
-      if (photoUrl) {
-        photos.push({
-          index: photos.length + 1,
-          thumbnail: resolveMediaUrl(img.attr("src"), url),
-          variants: [
-            {
-              resolution: "best",
-              url: photoUrl,
-            },
-          ],
-        });
-      }
+      if (!url) return;
+
+      photos.push({
+        index: photos.length + 1,
+        thumbnail: img.attr("src"),
+        variants: [
+          {
+            resolution: "best",
+            url,
+          },
+        ],
+      });
     }
 
     /* VIDEO */
     if (item.find(".video_wrapper video").length) {
       const video = item.find(".video_wrapper video").first();
 
-      const videoUrl = [video.attr("src"), ...video.find("source").toArray().map((source) => $(source).attr("src"))]
-        .map((source) => resolveMediaUrl(source, url)).find(Boolean);
-      if (!videoUrl) return;
+      const url = video.attr("src");
+      if (!url) return;
 
       videos.push({
         index: videos.length + 1,
-        thumbnail: resolveMediaUrl(video.attr("poster"), url),
-        url: videoUrl,
+        thumbnail: video.attr("poster") || null,
+        url,
         format: "mp4",
       });
     }

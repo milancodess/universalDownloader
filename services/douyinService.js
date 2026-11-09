@@ -1,7 +1,5 @@
-const axios = require("../lib/httpClient");
+const axios = require("axios");
 const cheerio = require("cheerio");
-const { resolveMediaUrl } = require("../lib/resolveMediaUrl");
-const providerUrl = "https://tikvideo.app/en/download-douyin-video";
 
 async function fetchDouyinVideoInfo(douyinUrl) {
   try {
@@ -24,14 +22,14 @@ async function fetchDouyinVideoInfo(douyinUrl) {
       },
     );
 
-    if (!data || data.status !== "ok" || typeof data.data !== "string") {
+    if (data.status !== "ok" || !data.data) {
       throw new Error("Tikvideo returned invalid response");
     }
 
     const $ = cheerio.load(data.data);
 
     const thumbnail =
-      resolveMediaUrl($(".tik-left .thumbnail .image-tik img").attr("src"), providerUrl);
+      $(".tik-left .thumbnail .image-tik img").attr("src") || null;
 
     const title = $(".tik-left .thumbnail .content h3").text().trim() || null;
 
@@ -41,18 +39,14 @@ async function fetchDouyinVideoInfo(douyinUrl) {
 
     $(".tik-right .dl-action a.tik-button-dl").each((_, el) => {
       const label = $(el).text().trim();
-      const url = resolveMediaUrl($(el).attr("href"), providerUrl);
+      const url = $(el).attr("href");
 
       if (url && !label.toLowerCase().includes("profile")) {
         links.push({ label, url });
       }
     });
 
-    const preview = resolveMediaUrl($("#vid").attr("data-src"), providerUrl);
-
-    if (!links.length && !preview) {
-      throw new Error("No media found");
-    }
+    const preview = $("#vid").attr("data-src") || null;
 
     return {
       title,
